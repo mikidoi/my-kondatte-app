@@ -1,3 +1,9 @@
+# .NET (MyApi) junk
+bin/
+obj/
+*.user
+*.suo
+
 # Logs
 logs
 *.log
