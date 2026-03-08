@@ -30,7 +30,7 @@ const App: React.FC = () => {
 
   return (
     <div style={{ padding: "20px", fontFamily: "sans-serif" }}>
-      <h1>My Kondate App Connection Test</h1>
+      <h1>Welcome to your Kondate App</h1>
 
       {error && <p style={{ color: "red" }}>Error: {error}</p>}
 
