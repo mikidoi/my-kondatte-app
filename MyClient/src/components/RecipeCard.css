@@ -1,0 +1,27 @@
+.recipe-card {
+    border: var(--card-border);
+    border-radius: var(--card-border-radius);
+    overflow: hidden;
+    box-shadow: var(--card-box-shadow);
+    max-width: var(--card-max-width);
+    margin: var(--card-margin);
+}
+
+.recipe-card-image {
+    width: var(--image-width);
+    height: var(--image-height);
+}
+
+.recipe-card-content {
+    padding: var(--content-padding);
+}
+
+.recipe-card-title {
+    font-size: var(--title-font-size);
+    margin: var(--title-margin);
+}
+
+.recipe-card-description {
+    font-size: var(--description-font-size);
+    color: var(--description-color);
+}

@@ -4,3 +4,22 @@
   padding: 2rem;
   text-align: center;
 }
+
+:root {
+  --card-border: 1px solid #ddd;
+  --card-border-radius: 8px;
+  --card-box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  --card-max-width: 300px;
+  --card-margin: 16px;
+
+  --image-width: 100%;
+  --image-height: auto;
+
+  --content-padding: 16px;
+
+  --title-font-size: 18px;
+  --title-margin: 0 0 8px;
+
+  --description-font-size: 14px;
+  --description-color: #555;
+}
