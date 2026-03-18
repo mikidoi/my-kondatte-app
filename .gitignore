@@ -28,3 +28,12 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+MyApi/wwwroot/images/*
+!MyApi/wwwroot/images/.gitkeep
+
+# SQLite database files
+*.db
+*.db-journal
+*.db-shm
+*.db-wal

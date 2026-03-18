@@ -24,4 +24,6 @@ app.UseAuthorization();
 // 3. IMPORTANT: This maps the incoming URLs to your Controller classes
 app.MapControllers();
 
+app.UseStaticFiles(); // This will serve files from wwwroot folder
+
 app.Run();

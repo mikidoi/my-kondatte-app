@@ -30,9 +30,41 @@ public class RecipeController : ControllerBase
         return Ok(recipe);
     }*/
 
-    [HttpPost]
-    public async Task<ActionResult<Recipe>> PostRecipes(Recipe recipe)
+    [HttpPost("upload")]
+    public async Task<IActionResult> PostWithImage([FromForm] RecipeUploadDto dto)
     {
+        string? fileName = null;
+     if (dto.File != null)
+        {
+            var file = dto.File;
+
+            if (file.Length > 5 * 1024 * 1024) // 5MB limit
+            {
+                return BadRequest("File size exceeds the 5MB limit.");
+            }
+            fileName = Guid.NewGuid().ToString() + Path.GetExtension(dto.File.FileName);
+
+            var uploadPath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "images");
+            if (!Directory.Exists(uploadPath)) Directory.CreateDirectory(uploadPath);
+
+
+            var filePath = Path.Combine(uploadPath, fileName);
+
+            using (var stream = new FileStream(filePath, FileMode.Create))
+            {
+                await file.CopyToAsync(stream);
+            }
+        }
+
+
+        var recipe = new Recipe
+        {
+            Name = dto.Name,
+            Ingredients = dto.Ingredients,
+            Instructions = dto.Instructions,
+            ImagePath = fileName
+        };
+
         _context.Recipes.Add(recipe);
         await _context.SaveChangesAsync();
 
