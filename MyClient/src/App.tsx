@@ -2,18 +2,49 @@ import React, { useEffect, useState } from "react";
 import RecipeCard from "./components/RecipeCard";
 import "./App.css";
 import "./index.css";
+import RecipeForm from "./components/RecipeForm";
 
 // Define the type for a recipe
 interface Recipe {
+  id: number;
   name: string;
   instructions: string;
   ingredients: string;
-  imagePath?: string;
+  image?: string;
 }
 
 const App: React.FC = () => {
   const [recipes, setRecipes] = useState<Recipe[]>([]);
   const [error, setError] = useState<string | null>(null);
+
+  const uploadRecipe = (newRecipe: any) => {
+    const formData = new FormData();
+
+    formData.append("name", newRecipe.name);
+    formData.append("ingredients", newRecipe.ingredients);
+    formData.append("instructions", newRecipe.instructions);
+
+    if (newRecipe.image) {
+      formData.append("file", newRecipe?.image);
+    }
+
+    fetch("/api/recipe/upload", {
+      method: "POST",
+      body: formData,
+    })
+      .then((response) => {
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        return response.json();
+      })
+      .then((data) => {
+        setRecipes((prevRecipes) => [...prevRecipes, data]);
+      })
+      .catch((err: Error) => {
+        setError(err.message);
+      });
+  };
 
   useEffect(() => {
     fetch("/api/recipe")
@@ -40,13 +71,15 @@ const App: React.FC = () => {
 
       {!error && recipes.length === 0 && <p>Loading data from API...</p>}
 
-      <ul>
+      <RecipeForm onSubmit={uploadRecipe} />
+      <ul style={{ display: "flex", flexWrap: "wrap", gap: "20px" }}>
         {recipes.map((item, index) => {
           const defaultImageUrl = "http://localhost:5109/images/food.jpg";
           const imageUrl = `http://localhost:5109/images/${item.imagePath}`;
           return (
             <li key={index}>
               <RecipeCard
+                id={item.id}
                 title={item.name}
                 description={item.instructions}
                 imageUrl={imageUrl ?? defaultImageUrl}
