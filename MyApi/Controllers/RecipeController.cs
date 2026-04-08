@@ -34,7 +34,7 @@ public class RecipeController : ControllerBase
     public async Task<IActionResult> PostWithImage([FromForm] RecipeUploadDto dto)
     {
         string? fileName = null;
-     if (dto.File != null)
+        if (dto.File != null)
         {
             var file = dto.File;
 
@@ -69,6 +69,27 @@ public class RecipeController : ControllerBase
         await _context.SaveChangesAsync();
 
         return CreatedAtAction(nameof(GetRecipes), new { id = recipe.Id }, recipe);
-    } 
+    }
+
+    [HttpDelete("{id}")]
+    public async Task<IActionResult> Delete(int id)
+    {
+        var recipe = await _context.Recipes.FindAsync(id);
+        if (recipe == null)
+            return NotFound();
+
+        if (!string.IsNullOrEmpty(recipe.ImagePath))
+        {
+            var filePath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "images", recipe.ImagePath);
+            if (System.IO.File.Exists(filePath))
+            {
+                System.IO.File.Delete(filePath);
+            }
+        }
+
+        _context.Recipes.Remove(recipe);
+        await _context.SaveChangesAsync();
+        return NoContent();
+    }
 }
 
