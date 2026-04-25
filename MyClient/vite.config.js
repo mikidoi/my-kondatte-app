@@ -9,9 +9,14 @@ export default defineConfig({
         target: "http://127.0.0.1:5109", // Using IP is safer on Mac
         changeOrigin: true,
         secure: false,
-        // This ensures /api/weatherforecast stays /api/weatherforecast 
+        // This ensures /api/weatherforecast stays /api/weatherforecast
         // when it hits the C# server
-        rewrite: (path) => path.replace(/^\/api/, '/api'),
+        rewrite: (path) => path.replace(/^\/api/, "/api"),
+      },
+      "/hubs": {
+        target: "http://127.0.0.1:5109",
+        changeOrigin: true,
+        ws: true, // ← critical for WebSockets (SignalR)
       },
     },
   },

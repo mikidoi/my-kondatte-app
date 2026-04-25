@@ -3,6 +3,7 @@ import RecipeCard from "./components/RecipeCard";
 import "./App.css";
 import "./index.css";
 import RecipeForm from "./components/RecipeForm";
+import { useSignalR } from "./hooks/useSignalR";
 
 // Define the type for a recipe
 interface Recipe {
@@ -62,6 +63,19 @@ const App: React.FC = () => {
         setError(err.message);
       });
   }, []);
+
+  useSignalR("/hubs/recipe", [
+    {
+      name: "RecipeCreated",
+      handler: () => fetch("/api/recipe"),
+    },
+    {
+      name: "RecipeDeleted",
+      handler: (id: unknown) => {
+        setRecipes((prev) => prev.filter((r) => r.id !== (id as number))); // remove directly
+      },
+    },
+  ]);
 
   return (
     <div style={{ padding: "20px", fontFamily: "sans-serif" }}>

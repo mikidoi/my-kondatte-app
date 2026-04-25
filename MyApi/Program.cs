@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using MyApi.Data;
+using MyApi.Hubs; // ✅ Add this — match your actual namespace
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -8,22 +9,34 @@ builder.Services.AddDbContext<AppDbContext>(options =>
 
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer(); 
+builder.Services.AddSignalR();
 builder.Services.AddSwaggerGen();
+
+builder.Services.AddCors(options =>
+{
+    options.AddDefaultPolicy(policy =>
+    {
+        policy.WithOrigins("http://localhost:5173")
+              .AllowAnyHeader()
+              .AllowAnyMethod()
+              .AllowCredentials();
+    });
+});
 
 var app = builder.Build();
 
+app.UseCors();
+app.UseStaticFiles(); // ✅ Moved up — should be before MapHub and MapControllers
+
+app.MapHub<RecipeHub>("/hubs/recipe");
+
 if (app.Environment.IsDevelopment())
 {
-    app.UseSwagger();   // <--- ADD THIS
-    app.UseSwaggerUI();  // <--- ADD THIS
+    app.UseSwagger();
+    app.UseSwaggerUI();
 }
 
-// 2. These are the "Middlewares" (the order matters!)
 app.UseAuthorization();
-
-// 3. IMPORTANT: This maps the incoming URLs to your Controller classes
 app.MapControllers();
-
-app.UseStaticFiles(); // This will serve files from wwwroot folder
 
 app.Run();

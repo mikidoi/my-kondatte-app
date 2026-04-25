@@ -1,6 +1,8 @@
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.SignalR;
 using Microsoft.EntityFrameworkCore; 
-using MyApi.Data;                   
+using MyApi.Data;
+using MyApi.Hubs;
 using MyApi.Models;
 
 namespace MyApi.Controllers;
@@ -9,9 +11,12 @@ namespace MyApi.Controllers;
 [Route("api/[controller]")]
 public class RecipeController : ControllerBase
 {
+
+    private readonly IHubContext<RecipeHub> _hubContext;
     private readonly AppDbContext _context;
-    public RecipeController(AppDbContext context)
+    public RecipeController(IHubContext<RecipeHub> hubContext, AppDbContext context)
     {
+        _hubContext = hubContext;
         _context = context;
     }
 
@@ -67,6 +72,7 @@ public class RecipeController : ControllerBase
 
         _context.Recipes.Add(recipe);
         await _context.SaveChangesAsync();
+        await _hubContext.Clients.All.SendAsync("RecipeCreated", recipe);
 
         return CreatedAtAction(nameof(GetRecipes), new { id = recipe.Id }, recipe);
     }
@@ -89,6 +95,8 @@ public class RecipeController : ControllerBase
 
         _context.Recipes.Remove(recipe);
         await _context.SaveChangesAsync();
+        await _hubContext.Clients.All.SendAsync("RecipeDeleted", id);
+        
         return NoContent();
     }
 }
