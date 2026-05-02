@@ -1,4 +1,4 @@
-import React, { useRef, useState } from "react";
+import React, { useImperativeHandle, useRef, useState } from "react";
 
 interface RecipeFormProps {
   onSubmit: (recipe: Recipe) => void;
@@ -11,13 +11,22 @@ interface Recipe {
   image: File | null;
 }
 
-const RecipeForm: React.FC<RecipeFormProps> = ({ onSubmit }) => {
+export interface RecipeFormHandle {
+  open: () => void;
+}
+
+const RecipeForm = React.forwardRef<RecipeFormHandle, RecipeFormProps>(
+  ({ onSubmit }, ref) => {
   const [name, setName] = useState("");
   const [ingredients, setIngredients] = useState("");
   const [instructions, setInstructions] = useState("");
   const [image, setImage] = useState<File | null>(null);
 
   const dialogRef = useRef<HTMLDialogElement>(null);
+
+  useImperativeHandle(ref, () => ({
+    open: () => dialogRef.current?.showModal(),
+  }));
 
   const handleSubmit = (e: { preventDefault: () => void }) => {
     e.preventDefault();
@@ -37,17 +46,12 @@ const RecipeForm: React.FC<RecipeFormProps> = ({ onSubmit }) => {
     }
   };
 
-  const openDialog = () => {
-    dialogRef.current?.showModal();
-  };
-
   const closeDialog = () => {
     dialogRef.current?.close();
   };
 
   return (
     <>
-      <button onClick={openDialog}>Add Recipe</button>
       <dialog ref={dialogRef}>
         <form onSubmit={handleSubmit}>
           <div
@@ -103,6 +107,6 @@ const RecipeForm: React.FC<RecipeFormProps> = ({ onSubmit }) => {
       </dialog>
     </>
   );
-};
+});
 
 export default RecipeForm;

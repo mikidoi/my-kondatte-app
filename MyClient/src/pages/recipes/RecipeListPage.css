@@ -1,0 +1,62 @@
+.kondate-list {
+  --olive: #6b7a2e;
+  --olive-mid: #8a9a3a;
+  --olive-light: #b5c16a;
+  --olive-pale: #eef1db;
+  --olive-faint: #f6f8ee;
+  --text: #1e1f1a;
+  --text-mid: #4a4d3a;
+  --text-soft: #8a8d7a;
+  --border: #dde0cc;
+  --bg: #f4f6e8;
+  --white: #fffffe;
+
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'DM Sans', sans-serif;
+  text-align: left;
+  min-height: calc(100vh + 4rem);
+}
+
+.kondate-list *,
+.kondate-list *::before,
+.kondate-list *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+.kondate-list button {
+  font-family: 'DM Sans', sans-serif;
+  border: none !important;
+  background: none;
+  padding: 0;
+  cursor: pointer;
+  border-radius: 0 !important;
+  font-size: inherit;
+  color: inherit;
+}
+
+.kondate-list button:hover { border-color: transparent !important; }
+.kondate-list button:focus,
+.kondate-list button:focus-visible { outline: none; }
+
+.kondate-list a { text-decoration: none; color: inherit; }
+
+@keyframes kondate-list-fadeup {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.kondate-list .recipe-card-anim {
+  animation: kondate-list-fadeup 0.3s ease both;
+}
+
+/* Hide scrollbar on category strip */
+.kondate-list .cat-strip {
+  display: flex;
+  gap: 6px;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+.kondate-list .cat-strip::-webkit-scrollbar { display: none; }

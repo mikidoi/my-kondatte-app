@@ -1,0 +1,47 @@
+.kondate-detail {
+  --olive: #6b7a2e;
+  --olive-mid: #8a9a3a;
+  --olive-light: #b5c16a;
+  --olive-pale: #eef1db;
+  --olive-faint: #f5f7ec;
+  --text: #1e1f1a;
+  --text-mid: #4a4d3a;
+  --text-soft: #8a8d7a;
+  --border: #dde0cc;
+  --bg: #fafaf7;
+  --white: #ffffff;
+
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'DM Sans', sans-serif;
+  text-align: left;
+  /* Break out of App.css #root padding (2rem on all sides) */
+  margin: -2rem;
+}
+
+.kondate-detail *,
+.kondate-detail *::before,
+.kondate-detail *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+.kondate-detail button {
+  font-family: 'DM Sans', sans-serif;
+  border: none !important;
+  background: none;
+  padding: 0;
+  cursor: pointer;
+  border-radius: 0 !important;
+  font-size: inherit;
+}
+
+.kondate-detail button:hover {
+  border-color: transparent !important;
+}
+
+.kondate-detail button:focus,
+.kondate-detail button:focus-visible {
+  outline: none;
+}

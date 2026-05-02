@@ -1,0 +1,66 @@
+.kondate-menu {
+  --olive: #6b7a2e;
+  --olive-mid: #8a9a3a;
+  --olive-light: #b5c16a;
+  --olive-pale: #eef1db;
+  --olive-faint: #f6f8ee;
+  --text: #1e1f1a;
+  --text-mid: #4a4d3a;
+  --text-soft: #8a8d7a;
+  --border: #dde0cc;
+  --bg: #f4f6e8;
+  --white: #fffffe;
+
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'DM Sans', sans-serif;
+  text-align: left;
+  /* Break out of App.css #root padding */
+  margin: -2rem;
+}
+
+.kondate-menu *,
+.kondate-menu *::before,
+.kondate-menu *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+.kondate-menu button {
+  font-family: 'DM Sans', sans-serif;
+  border: none !important;
+  background: none;
+  padding: 0;
+  cursor: pointer;
+  border-radius: 0 !important;
+  font-size: inherit;
+  color: inherit;
+}
+
+.kondate-menu button:hover {
+  border-color: transparent !important;
+}
+
+.kondate-menu button:focus,
+.kondate-menu button:focus-visible {
+  outline: none;
+}
+
+@keyframes kondate-fadein {
+  from { opacity: 0; transform: translateY(6px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes kondate-pop {
+  0%   { transform: scale(0.85); opacity: 0; }
+  100% { transform: scale(1);    opacity: 1; }
+}
+
+.kondate-menu .meal-pop {
+  animation: kondate-pop 0.2s ease;
+}
+
+.kondate-menu .grid-fadein {
+  animation: kondate-fadein 0.3s ease;
+}

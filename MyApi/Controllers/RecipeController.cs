@@ -26,17 +26,17 @@ public class RecipeController : ControllerBase
         return await _context.Recipes.ToListAsync();
     }
 
-    /*[ HttpGet("{id}")]
-    public ActionResult<Recipe> Get(int id)
+    [HttpGet("{id}")]
+    public async Task<ActionResult<Recipe>> GetRecipe(int id)
     {
-        var recipe = Recipes.FirstOrDefault(r => r.Id == id);
+        var recipe = await _context.Recipes.FindAsync(id);
         if (recipe == null)
             return NotFound();
         return Ok(recipe);
-    }*/
+    }
 
     [HttpPost("upload")]
-    public async Task<IActionResult> PostWithImage([FromForm] RecipeUploadDto dto)
+    public async Task<IActionResult> CreateRecipe([FromForm] RecipeUploadDto dto)
     {
         string? fileName = null;
         if (dto.File != null)
@@ -77,8 +77,29 @@ public class RecipeController : ControllerBase
         return CreatedAtAction(nameof(GetRecipes), new { id = recipe.Id }, recipe);
     }
 
+    [HttpPut("{id}")]
+    public async Task<IActionResult> EditRecipe(int id, [FromBody] Recipe updatedRecipe)
+    {
+        if (id != updatedRecipe.Id)
+            return BadRequest();
+
+        var recipe = await _context.Recipes.FindAsync(id);
+        if (recipe == null)
+            return NotFound();
+
+        recipe.Name = updatedRecipe.Name;
+        recipe.Ingredients = updatedRecipe.Ingredients;
+        recipe.Instructions = updatedRecipe.Instructions;
+
+        _context.Recipes.Update(recipe);
+        await _context.SaveChangesAsync();
+        await _hubContext.Clients.All.SendAsync("RecipeUpdated", recipe);
+
+        return NoContent();
+    }
+    
     [HttpDelete("{id}")]
-    public async Task<IActionResult> Delete(int id)
+    public async Task<IActionResult> DeleteRecipe(int id)
     {
         var recipe = await _context.Recipes.FindAsync(id);
         if (recipe == null)
