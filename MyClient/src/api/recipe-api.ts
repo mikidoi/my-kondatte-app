@@ -1,5 +1,5 @@
 export const recipeApi = {
-  getRecipes: async (request: any) => {
+  uploadRecipe: async (request: FormData) => {
     const response = await fetch("/api/recipe/upload", {
       method: "POST",
       body: request,

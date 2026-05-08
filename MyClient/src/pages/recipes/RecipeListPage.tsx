@@ -30,7 +30,6 @@ const SORT_OPTIONS: SortBy[] = ["Recent", "Rating", "Quickest"];
 
 export const RecipeListPage: React.FC = () => {
   const bp = useBreakpoint();
-  console.log("Current breakpoint:", bp);
   const formRef = useRef<RecipeFormHandle>(null);
 
   const [recipes, setRecipes] = useState<Recipe[]>([]);
@@ -79,7 +78,7 @@ export const RecipeListPage: React.FC = () => {
     formData.append("ingredients", newRecipe.ingredients);
     formData.append("instructions", newRecipe.instructions);
     if (newRecipe.image) formData.append("file", newRecipe.image);
-    recipeApi.getRecipes(formData).catch((e: Error) => setError(e.message));
+    recipeApi.uploadRecipe(formData).catch((e: Error) => setError(e.message));
   };
 
   const deleteRecipe = async (id: number) => {

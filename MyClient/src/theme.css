@@ -1,0 +1,50 @@
+/* ── Design tokens ──────────────────────────────────────────── */
+:root {
+  --olive:       #6b7a2e;
+  --olive-mid:   #8a9a3a;
+  --olive-light: #b5c16a;
+  --olive-pale:  #eef1db;
+  --olive-faint: #f6f8ee;
+  --text:        #1e1f1a;
+  --text-mid:    #4a4d3a;
+  --text-soft:   #8a8d7a;
+  --border:      #dde0cc;
+  --bg:          #f4f6e8;
+  --white:       #fffffe;
+}
+
+/* ── Global resets ──────────────────────────────────────────── */
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: 'DM Sans', sans-serif;
+  color: var(--text);
+  background: var(--bg);
+}
+
+/* ── Button reset ───────────────────────────────────────────── */
+button {
+  font-family: 'DM Sans', sans-serif;
+  border: none;
+  background: none;
+  padding: 0;
+  cursor: pointer;
+  font-size: inherit;
+  color: inherit;
+  border-radius: 0;
+}
+
+button:focus,
+button:focus-visible {
+  outline: none;
+}
+
+/* ── Link reset ─────────────────────────────────────────────── */
+a {
+  text-decoration: none;
+  color: inherit;
+}

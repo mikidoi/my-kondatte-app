@@ -1,0 +1,8 @@
+**/bin
+**/obj
+**/node_modules
+**/dist
+MyApi/kondatte.db
+MyApi/wwwroot/images/*
+.git
+.claude
