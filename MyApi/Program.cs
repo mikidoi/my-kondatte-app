@@ -4,8 +4,9 @@ using MyApi.Hubs; // ✅ Add this — match your actual namespace
 
 var builder = WebApplication.CreateBuilder(args);
 
+var dbPath = Environment.GetEnvironmentVariable("DB_PATH") ?? "kondatte.db";
 builder.Services.AddDbContext<AppDbContext>(options =>
-    options.UseSqlite("Data Source=kondatte.db"));
+    options.UseSqlite($"Data Source={dbPath}"));
 
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer(); 

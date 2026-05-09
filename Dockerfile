@@ -14,6 +14,6 @@ RUN dotnet publish -c Release -o /publish
 FROM mcr.microsoft.com/dotnet/aspnet:10.0
 WORKDIR /app
 COPY --from=server-build /publish .
-RUN mkdir -p wwwroot/images
+RUN mkdir -p wwwroot/images data
 EXPOSE 8080
 CMD ["dotnet", "MyApi.dll"]

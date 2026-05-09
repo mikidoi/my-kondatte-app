@@ -37,3 +37,6 @@ MyApi/wwwroot/images/*
 *.db-journal
 *.db-shm
 *.db-wal
+
+# Database backups
+*.sql
