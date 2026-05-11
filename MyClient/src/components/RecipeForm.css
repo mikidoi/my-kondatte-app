@@ -1,0 +1,23 @@
+.recipe-form-dialog[open] {
+  display: flex;
+  flex-direction: column;
+  margin: auto;
+}
+
+.recipe-form-dialog {
+  animation: dialogIn 0.25s cubic-bezier(0.32, 0.72, 0, 1) both;
+}
+
+.recipe-form-dialog::backdrop {
+  background: rgba(20, 22, 12, 0.45);
+  backdrop-filter: blur(2px);
+}
+
+@keyframes dialogIn {
+  from { opacity: 0; transform: translateY(20px) scale(0.98); }
+  to   { opacity: 1; transform: translateY(0)    scale(1);    }
+}
+
+.rf-scroll::-webkit-scrollbar       { width: 8px; }
+.rf-scroll::-webkit-scrollbar-thumb { background: #dde0cc; border-radius: 4px; }
+.rf-scroll::-webkit-scrollbar-track { background: transparent; }
