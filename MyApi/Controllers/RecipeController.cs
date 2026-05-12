@@ -78,18 +78,46 @@ public class RecipeController : ControllerBase
     }
 
     [HttpPut("{id}")]
-    public async Task<IActionResult> EditRecipe(int id, [FromBody] Recipe updatedRecipe)
+    public async Task<IActionResult> EditRecipe(int id, [FromForm] RecipeEditDto dto)
     {
-        if (id != updatedRecipe.Id)
-            return BadRequest();
-
         var recipe = await _context.Recipes.FindAsync(id);
         if (recipe == null)
             return NotFound();
 
-        recipe.Name = updatedRecipe.Name;
-        recipe.Ingredients = updatedRecipe.Ingredients;
-        recipe.Instructions = updatedRecipe.Instructions;
+        recipe.Name = dto.Name;
+        recipe.Ingredients = dto.Ingredients;
+        recipe.Instructions = dto.Instructions;
+        if(dto.File != null) 
+        {
+            var file = dto.File;
+
+            if (file.Length > 5 * 1024 * 1024) // 5MB limit
+            {
+                return BadRequest("File size exceeds the 5MB limit.");
+            }
+            if (!string.IsNullOrEmpty(recipe.ImagePath))
+            {
+                var oldFilePath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "images", recipe.ImagePath);
+                if (System.IO.File.Exists(oldFilePath))
+                {
+                    System.IO.File.Delete(oldFilePath);
+                }
+            }
+            
+            var fileName = Guid.NewGuid().ToString() + Path.GetExtension(dto.File.FileName);
+
+            var uploadPath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "images");
+            if (!Directory.Exists(uploadPath)) Directory.CreateDirectory(uploadPath);
+
+            var filePath = Path.Combine(uploadPath, fileName);
+
+            using (var stream = new FileStream(filePath, FileMode.Create))
+            {
+                await file.CopyToAsync(stream);
+            }
+
+            recipe.ImagePath = fileName;
+        }
 
         _context.Recipes.Update(recipe);
         await _context.SaveChangesAsync();

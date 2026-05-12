@@ -1,14 +1,15 @@
 using System.ComponentModel.DataAnnotations;
 
-public class RecipeUploadDto
+public class RecipeEditDto
 {
     [Required]
     public string Name { get; set; } = string.Empty;
-    
+
     [Required]
     public string Ingredients { get; set; } = string.Empty;
 
     [Required]
     public string Instructions { get; set; } = string.Empty;
-    public IFormFile? File { get; set; } 
+
+    public IFormFile? File { get; set; }
 }

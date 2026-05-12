@@ -1,6 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using MyApi.Data;
-using MyApi.Hubs; // ✅ Add this — match your actual namespace
+using MyApi.Hubs;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -32,7 +32,7 @@ using (var scope = app.Services.CreateScope())
 }
 
 app.UseCors();
-app.UseStaticFiles(); // ✅ Moved up — should be before MapHub and MapControllers
+app.UseStaticFiles();
 
 app.MapHub<RecipeHub>("/hubs/recipe");
 
