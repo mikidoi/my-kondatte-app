@@ -12,7 +12,7 @@ import IcoCheck from "./icons/IcoCheck";
 import IcoClose from "./icons/IcoClose";
 import IcoPlus from "./icons/IcoPlus";
 import IcoTrash from "./icons/IcoTrash";
-import "./RecipeForm.css";
+import "./CreateRecipeDialog.css";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -29,11 +29,11 @@ interface InstructionStep {
   text: string;
 }
 
-export interface RecipeFormHandle {
+export interface CreateRecipeDialogHandle {
   open: () => void;
 }
 
-interface RecipeFormProps {
+interface CreateRecipeDialogProps {
   onSubmit: (recipe: {
     name: string;
     ingredients: string;
@@ -629,7 +629,7 @@ function serializeInstructions(steps: InstructionStep[]): string {
 
 // ── Main component ────────────────────────────────────────────────────────────
 
-const RecipeForm = forwardRef<RecipeFormHandle, RecipeFormProps>(
+const CreateRecipeDialog = forwardRef<CreateRecipeDialogHandle, CreateRecipeDialogProps>(
   ({ onSubmit }, ref) => {
     const bp = useBreakpoint();
     const dialogRef = useRef<HTMLDialogElement>(null);
@@ -710,7 +710,7 @@ const RecipeForm = forwardRef<RecipeFormHandle, RecipeFormProps>(
         };
 
     return (
-      <dialog ref={dialogRef} className="recipe-form-dialog" style={dialogStyle}>
+      <dialog ref={dialogRef} className="create-recipe-dialog" style={dialogStyle}>
         <form
           onSubmit={handleSubmit}
           style={{
@@ -832,7 +832,7 @@ const RecipeForm = forwardRef<RecipeFormHandle, RecipeFormProps>(
 
               {/* ── Mobile body ── */}
               <div
-                className="rf-scroll"
+                className="crd-scroll"
                 style={{
                   flex: 1,
                   overflowY: "auto",
@@ -980,7 +980,7 @@ const RecipeForm = forwardRef<RecipeFormHandle, RecipeFormProps>(
 
               {/* ── Desktop body ── */}
               <div
-                className="rf-scroll"
+                className="crd-scroll"
                 style={{ flex: 1, overflowY: "auto", padding: 24 }}
               >
                 <div
@@ -1052,6 +1052,6 @@ const RecipeForm = forwardRef<RecipeFormHandle, RecipeFormProps>(
   }
 );
 
-RecipeForm.displayName = "RecipeForm";
+CreateRecipeDialog.displayName = "CreateRecipeDialog";
 
-export default RecipeForm;
+export default CreateRecipeDialog;

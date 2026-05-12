@@ -1,5 +1,5 @@
 import React from "react";
-import { Link } from "react-router-dom";
+import { NavLink } from "react-router-dom";
 import Logo from "../../Logo";
 import Avatar from "../../Avatar";
 
@@ -20,21 +20,22 @@ const DesktopNavBar: React.FC<{ recipeCount: number }> = ({ recipeCount }) => (
   >
     <Logo />
     <div style={{ display: "flex", gap: 4 }}>
-      {(["Weekly Kondate", "Recipes"] as const).map((label, i) => (
-        <Link
+      {([["Weekly Kondate", "/"], ["Recipes", "/recipes"]] as const).map(([label, to]) => (
+        <NavLink
           key={label}
-          to={i === 0 ? "/" : "#"}
-          style={{
+          to={to}
+          end
+          style={({ isActive }) => ({
             padding: "6px 14px",
             borderRadius: 8,
             fontSize: 13,
             fontWeight: 500,
-            background: i === 1 ? "var(--olive-pale)" : "transparent",
-            color: i === 1 ? "var(--olive)" : "var(--text-soft)",
-          }}
+            background: isActive ? "var(--olive-pale)" : "transparent",
+            color: isActive ? "var(--olive)" : "var(--text-soft)",
+          })}
         >
           {label}
-        </Link>
+        </NavLink>
       ))}
     </div>
     <div style={{ display: "flex", alignItems: "center", gap: 12 }}>

@@ -43,6 +43,12 @@ button:focus-visible {
   outline: none;
 }
 
+/* ── Placeholder ────────────────────────────────────────────── */
+input::placeholder,
+textarea::placeholder {
+  color: #c5c8b5;
+}
+
 /* ── Link reset ─────────────────────────────────────────────── */
 a {
   text-decoration: none;

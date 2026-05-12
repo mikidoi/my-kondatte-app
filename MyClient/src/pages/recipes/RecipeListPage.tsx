@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { useSignalR } from "../../hooks/useSignalR";
 import useBreakpoint from "../../hooks/useBreakpoint";
-import RecipeForm, { RecipeFormHandle } from "../../components/RecipeForm";
+import CreateRecipeDialog, { CreateRecipeDialogHandle } from "../../components/CreateRecipeDialog";
 import { recipeApi } from "../../api/recipe-api";
 import DesktopLayout from "../../components/layout/desktop/DesktopLayout";
 import TabletLayout from "../../components/layout/TabletLayout";
@@ -30,7 +30,7 @@ const SORT_OPTIONS: SortBy[] = ["Recent", "Rating", "Quickest"];
 
 export const RecipeListPage: React.FC = () => {
   const bp = useBreakpoint();
-  const formRef = useRef<RecipeFormHandle>(null);
+  const formRef = useRef<CreateRecipeDialogHandle>(null);
 
   const [recipes, setRecipes] = useState<Recipe[]>([]);
   const [error, setError] = useState<string | null>(null);
@@ -131,7 +131,7 @@ export const RecipeListPage: React.FC = () => {
 
   return (
     <div className="kondate-list">
-      <RecipeForm ref={formRef} onSubmit={uploadRecipe} />
+      <CreateRecipeDialog ref={formRef} onSubmit={uploadRecipe} />
       {bp === "mobile" && (
         <MobileLayout
           {...shared}

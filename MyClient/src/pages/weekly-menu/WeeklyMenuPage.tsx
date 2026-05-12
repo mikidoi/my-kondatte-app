@@ -1,4 +1,5 @@
 import React, { useEffect, useRef, useState } from "react";
+import DesktopNavBar from "../../components/layout/desktop/DesktopNavBar";
 import "./WeeklyMenuPage.css";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -130,35 +131,6 @@ const BottomNav: React.FC<{ activeIndex?: number }> = ({ activeIndex = 2 }) => {
   );
 };
 
-const NavBar: React.FC<{ totalMeals?: number; compact?: boolean }> = ({ totalMeals = 0, compact = false }) => (
-  <nav style={{ height: compact ? 54 : 60, background: "var(--white)", borderBottom: "1px solid var(--border)", display: "flex", alignItems: "center", justifyContent: "space-between", padding: compact ? "0 20px" : "0 32px", position: "sticky", top: 0, zIndex: 10 }}>
-    <div style={{ display: "flex", alignItems: "center", gap: compact ? 8 : 10 }}>
-      <div style={{ width: compact ? 28 : 32, height: compact ? 28 : 32, borderRadius: compact ? 7 : 8, background: "var(--olive)", display: "flex", alignItems: "center", justifyContent: "center" }}>
-        <svg width={compact ? 15 : 18} height={compact ? 15 : 18} viewBox="0 0 24 24" fill="none">
-          <path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z" stroke="#fff" strokeWidth="1.8" fill="none" />
-          <polyline points="9,22 9,12 15,12 15,22" stroke="#fff" strokeWidth="1.8" fill="none" />
-        </svg>
-      </div>
-      <span style={{ fontFamily: "DM Serif Display, serif", fontSize: compact ? 18 : 20, color: "var(--text)", letterSpacing: "-0.01em" }}>Kondate</span>
-    </div>
-    <div style={{ display: "flex", gap: compact ? 4 : 6 }}>
-      {["Recipes", "Planner", "Shopping"].map((item, i) => (
-        <button key={item} style={{ padding: compact ? "5px 12px" : "6px 14px", borderRadius: compact ? 7 : 8, fontSize: compact ? 12 : 13, fontWeight: 500, background: i === 1 ? "var(--olive-pale)" : "transparent", color: i === 1 ? "var(--olive)" : "var(--text-soft)" }}>
-          {item}
-        </button>
-      ))}
-    </div>
-    <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-      {!compact && totalMeals > 0 && (
-        <div style={{ fontSize: 12, color: "var(--text-soft)", background: "var(--olive-faint)", borderRadius: 20, padding: "4px 12px", border: "1px solid var(--border)" }}>
-          <span style={{ color: "var(--olive)", fontWeight: 700 }}>{totalMeals}</span> meal{totalMeals !== 1 ? "s" : ""} planned
-        </div>
-      )}
-      <div style={{ width: compact ? 30 : 34, height: compact ? 30 : 34, borderRadius: "50%", background: "var(--olive-pale)", border: "2px solid var(--olive-light)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: compact ? 12 : 13, fontWeight: 700, color: "var(--olive)" }}>K</div>
-    </div>
-  </nav>
-);
-
 // ─── Desktop layout ────────────────────────────────────────────────────────────
 
 const MealCell: React.FC<{
@@ -238,7 +210,7 @@ const DesktopPlanner: React.FC<{
   onRemoveMeal: (day: string, index: number) => void;
 }> = ({ weekDates, weekLabel, weekOffset, mealData, totalMeals, onPrev, onNext, onAddMeal, onRemoveMeal }) => (
   <div style={{ minHeight: "100vh", background: "var(--bg)", display: "flex", flexDirection: "column" }}>
-    <NavBar totalMeals={totalMeals} />
+    <DesktopNavBar recipeCount={totalMeals} />
 
     {/* Page header */}
     <div style={{ padding: "36px 32px 24px", display: "flex", alignItems: "flex-end", justifyContent: "space-between" }}>
@@ -306,7 +278,7 @@ const TabletPlanner: React.FC<{
   onRemoveMeal: (day: string, index: number) => void;
 }> = ({ weekDates, weekLabel, weekOffset, mealData, onPrev, onNext, onAddMeal, onRemoveMeal }) => (
   <div style={{ minHeight: "100vh", background: "var(--bg)", display: "flex", flexDirection: "column" }}>
-    <NavBar compact />
+    <DesktopNavBar recipeCount={0} />
 
     {/* Header */}
     <div style={{ padding: "20px 20px 14px", display: "flex", alignItems: "center", justifyContent: "space-between", flexShrink: 0 }}>
