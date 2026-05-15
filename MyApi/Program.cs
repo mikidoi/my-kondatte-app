@@ -9,9 +9,10 @@ builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseSqlite($"Data Source={dbPath}"));
 
 builder.Services.AddControllers();
-builder.Services.AddEndpointsApiExplorer(); 
+builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSignalR();
 builder.Services.AddSwaggerGen();
+builder.Services.AddHttpClient();
 
 builder.Services.AddCors(options =>
 {
