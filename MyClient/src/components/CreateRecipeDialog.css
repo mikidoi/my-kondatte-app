@@ -2,6 +2,7 @@
   display: flex;
   flex-direction: column;
   margin: auto;
+  inset: 0;
 }
 
 .create-recipe-dialog {

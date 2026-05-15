@@ -14,14 +14,7 @@ import IcoPlus from "../../components/icons/IcoPlus";
 import RecipeGridCard from "./components/RecipeGridCard";
 import RecipeListRow from "./components/RecipeListRow";
 import "./RecipeListPage.css";
-
-interface Recipe {
-  id: number;
-  name: string;
-  ingredients: string;
-  instructions: string;
-  imagePath?: string;
-}
+import { Recipe } from "../../types/recipe";
 
 type ViewMode = "grid" | "list";
 type SortBy = "Recent" | "Rating" | "Quickest";
@@ -69,12 +62,20 @@ export const RecipeListPage: React.FC = () => {
 
   const uploadRecipe = (newRecipe: {
     name: string;
+    description: string;
+    category: string;
+    preparationTime: number;
+    servesCount: number;
     ingredients: string;
     instructions: string;
     image: File | null;
   }) => {
     const formData = new FormData();
     formData.append("name", newRecipe.name);
+    formData.append("description", newRecipe.description);
+    formData.append("category", newRecipe.category);
+    formData.append("preparationTime", String(newRecipe.preparationTime));
+    formData.append("servesCount", String(newRecipe.servesCount));
     formData.append("ingredients", newRecipe.ingredients);
     formData.append("instructions", newRecipe.instructions);
     if (newRecipe.image) formData.append("file", newRecipe.image);

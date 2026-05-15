@@ -1,21 +1,12 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import "./RecipeDetailPage.css";
+import { Recipe } from "../../types/recipe";
+import EditRecipeDialog, { EditRecipeDialogHandle } from "../../components/EditRecipeDialog";
 
-// ─── Types ────────────────────────────────────────────────────────────────────
-
-interface Recipe {
-  id: number;
-  name: string;
-  ingredients: string;
-  instructions: string;
-  imagePath?: string;
-}
-
-interface IngLine {
-  amount: string;
-  rest: string;
-}
+type IngLine =
+  | { type: "ingredient"; amount: string; rest: string }
+  | { type: "group"; label: string };
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
@@ -26,11 +17,8 @@ const ACTIONS = [
   { id: "plan", icon: "plan", label: "Plan" },
   { id: "shop", icon: "shop", label: "Shop" },
   { id: "rate", icon: "star", label: "Rate" },
-  { id: "print", icon: "print", label: "Print" },
   { id: "edit", icon: "pencil", label: "Edit" },
 ];
-
-const MOBILE_ACTIONS = ACTIONS.filter((a) => a.id !== "print");
 
 const BOTTOM_NAV = [
   { icon: "home", label: "Home" },
@@ -49,8 +37,31 @@ function parseLines(text: string): string[] {
 }
 
 function parseIngLine(line: string): IngLine {
+  if (line.startsWith("[") && line.endsWith("]"))
+    return { type: "group", label: line.slice(1, -1) };
   const m = line.match(/^(\d+(?:\.\d+)?)\s+(.*)/);
-  return m ? { amount: m[1], rest: m[2] } : { amount: "", rest: line };
+  return m ? { type: "ingredient", amount: m[1], rest: m[2] } : { type: "ingredient", amount: "", rest: line };
+}
+
+type IngSection = {
+  header: string | null;
+  items: { ing: Extract<IngLine, { type: "ingredient" }>; idx: number }[];
+};
+
+function groupIngredients(lines: IngLine[]): IngSection[] {
+  const sections: IngSection[] = [];
+  let current: IngSection = { header: null, items: [] };
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i];
+    if (line.type === "group") {
+      if (current.items.length > 0) sections.push(current);
+      current = { header: line.label, items: [] };
+    } else {
+      current.items.push({ ing: line, idx: i });
+    }
+  }
+  if (current.items.length > 0 || current.header !== null) sections.push(current);
+  return sections;
 }
 
 function scaleAmt(amount: string, servings: number): string {
@@ -202,31 +213,6 @@ const Ic: React.FC<{ name: string; size?: number; color?: string }> = ({
         strokeWidth="1.6"
         fill="none"
       />
-    ),
-    print: (
-      <>
-        <polyline
-          points="6,9 6,2 18,2 18,9"
-          stroke={color}
-          strokeWidth="1.6"
-          fill="none"
-        />
-        <path
-          d="M6 18H4a2 2 0 01-2-2v-5a2 2 0 012-2h16a2 2 0 012 2v5a2 2 0 01-2 2h-2"
-          stroke={color}
-          strokeWidth="1.6"
-          fill="none"
-        />
-        <rect
-          x="6"
-          y="14"
-          width="12"
-          height="8"
-          stroke={color}
-          strokeWidth="1.6"
-          fill="none"
-        />
-      </>
     ),
     pencil: (
       <>
@@ -642,8 +628,9 @@ const ServingsRow: React.FC<{
   </div>
 );
 
+
 const IngItem: React.FC<{
-  ing: IngLine;
+  ing: Extract<IngLine, { type: "ingredient" }>;
   index: number;
   servings: number;
   checked: boolean;
@@ -766,6 +753,7 @@ const DesktopDetail: React.FC<{
   rating: number;
   setRating: (v: number) => void;
   onBack: () => void;
+  onEdit: () => void;
 }> = ({
   recipe,
   ingredients,
@@ -786,6 +774,7 @@ const DesktopDetail: React.FC<{
   rating,
   setRating,
   onBack,
+  onEdit,
 }) => (
   <div
     style={{
@@ -834,7 +823,7 @@ const DesktopDetail: React.FC<{
         Kondate
       </span>
       <div style={{ display: "flex", gap: 8 }}>
-        <button style={{ padding: 6 }}>
+        <button style={{ padding: 6 }} onClick={onEdit}>
           <Ic name="edit" size={18} color="var(--text-soft)" />
         </button>
         <button style={{ padding: 6 }}>
@@ -967,25 +956,28 @@ const DesktopDetail: React.FC<{
             <ServingsRow servings={servings} setServings={setServings} />
           </div>
           <div style={{ paddingBottom: 4 }}>
-            {ingredients.map((ing, i) => (
-              <div
-                key={i}
-                style={{
-                  borderBottom:
-                    i < ingredients.length - 1
-                      ? "1px solid var(--border)"
-                      : "none",
-                }}
-              >
-                <IngItem
-                  ing={ing}
-                  index={i}
-                  servings={servings}
-                  checked={checkedIng.includes(i)}
-                  onToggle={() => toggleIng(i)}
-                />
-              </div>
-            ))}
+            {groupIngredients(ingredients).map((section, si) =>
+              section.header ? (
+                <div key={si} style={{ margin: "8px 12px", border: "1px solid var(--olive-light)", borderRadius: 10, overflow: "hidden" }}>
+                  <div style={{ padding: "6px 14px", background: "var(--olive-faint)", fontSize: 10, fontWeight: 700, color: "var(--olive)", textTransform: "uppercase", letterSpacing: "0.06em" }}>
+                    {section.header}
+                  </div>
+                  {section.items.map(({ ing, idx }, j) => (
+                    <div key={idx} style={{ borderTop: "1px solid var(--border)" }}>
+                      <IngItem ing={ing} index={idx} servings={servings} checked={checkedIng.includes(idx)} onToggle={() => toggleIng(idx)} />
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <React.Fragment key={si}>
+                  {section.items.map(({ ing, idx }, j) => (
+                    <div key={idx} style={{ borderBottom: j < section.items.length - 1 ? "1px solid var(--border)" : "none" }}>
+                      <IngItem ing={ing} index={idx} servings={servings} checked={checkedIng.includes(idx)} onToggle={() => toggleIng(idx)} />
+                    </div>
+                  ))}
+                </React.Fragment>
+              )
+            )}
           </div>
         </div>
       </div>
@@ -1007,13 +999,18 @@ const DesktopDetail: React.FC<{
               fontSize: 32,
               fontWeight: 400,
               color: "var(--text)",
-              marginBottom: 20,
+              marginBottom: recipe.description ? 10 : 20,
               letterSpacing: "-0.01em",
               lineHeight: 1.2,
             }}
           >
             {recipe.name}
           </h1>
+          {recipe.description && (
+            <p style={{ fontSize: 14, color: "var(--text-soft)", lineHeight: 1.6, marginBottom: 20 }}>
+              {recipe.description}
+            </p>
+          )}
           <div
             style={{
               display: "flex",
@@ -1074,7 +1071,7 @@ const DesktopDetail: React.FC<{
                   color: "var(--text-mid)",
                 }}
               >
-                Prep: —
+                {recipe.preparationTime > 0 ? `Prep: ${recipe.preparationTime} min` : "Prep: —"}
               </span>
             </div>
             <div style={{ display: "flex", gap: 2, marginLeft: "auto" }}>
@@ -1314,6 +1311,7 @@ const TabletDetail: React.FC<{
   activeAction: string | null;
   toggleAction: (a: string) => void;
   onBack: () => void;
+  onEdit: () => void;
 }> = ({
   recipe,
   ingredients,
@@ -1330,6 +1328,7 @@ const TabletDetail: React.FC<{
   activeAction,
   toggleAction,
   onBack,
+  onEdit,
 }) => (
   <div
     style={{
@@ -1378,7 +1377,7 @@ const TabletDetail: React.FC<{
         <button style={{ padding: 6 }}>
           <Ic name="share" size={18} color="var(--text-soft)" />
         </button>
-        <button style={{ padding: 6 }}>
+        <button style={{ padding: 6 }} onClick={onEdit}>
           <Ic name="edit" size={18} color="var(--text-soft)" />
         </button>
       </div>
@@ -1457,13 +1456,18 @@ const TabletDetail: React.FC<{
             fontFamily: "DM Serif Display, serif",
             fontSize: 26,
             fontWeight: 400,
-            marginBottom: 16,
+            marginBottom: recipe.description ? 8 : 16,
             color: "var(--text)",
             lineHeight: 1.2,
           }}
         >
           {recipe.name}
         </h1>
+        {recipe.description && (
+          <p style={{ fontSize: 13, color: "var(--text-soft)", lineHeight: 1.6, marginBottom: 16 }}>
+            {recipe.description}
+          </p>
+        )}
         <div
           style={{
             display: "flex",
@@ -1488,7 +1492,7 @@ const TabletDetail: React.FC<{
           {(
             [
               ["users", `${servings} serves`],
-              ["clock", "Prep: —"],
+              ["clock", recipe.preparationTime > 0 ? `${recipe.preparationTime} min` : "Prep: —"],
             ] as [string, string][]
           ).map(([ic, label]) => (
             <div
@@ -1578,27 +1582,28 @@ const TabletDetail: React.FC<{
               </button>
             </div>
           </div>
-          {ingredients.map((ing, i) => (
-            <div
-              key={i}
-              style={{
-                borderBottom:
-                  i < ingredients.length - 1
-                    ? "1px solid var(--border)"
-                    : "none",
-              }}
-            >
-              <IngItem
-                ing={ing}
-                index={i}
-                servings={servings}
-                checked={checkedIng.includes(i)}
-                onToggle={() => toggleIng(i)}
-                circleSize={16}
-                fontSize={12}
-              />
-            </div>
-          ))}
+          {groupIngredients(ingredients).map((section, si) =>
+            section.header ? (
+              <div key={si} style={{ margin: "6px 10px", border: "1px solid var(--olive-light)", borderRadius: 8, overflow: "hidden" }}>
+                <div style={{ padding: "5px 12px", background: "var(--olive-faint)", fontSize: 10, fontWeight: 700, color: "var(--olive)", textTransform: "uppercase", letterSpacing: "0.06em" }}>
+                  {section.header}
+                </div>
+                {section.items.map(({ ing, idx }) => (
+                  <div key={idx} style={{ borderTop: "1px solid var(--border)" }}>
+                    <IngItem ing={ing} index={idx} servings={servings} checked={checkedIng.includes(idx)} onToggle={() => toggleIng(idx)} circleSize={16} fontSize={12} />
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <React.Fragment key={si}>
+                {section.items.map(({ ing, idx }, j) => (
+                  <div key={idx} style={{ borderBottom: j < section.items.length - 1 ? "1px solid var(--border)" : "none" }}>
+                    <IngItem ing={ing} index={idx} servings={servings} checked={checkedIng.includes(idx)} onToggle={() => toggleIng(idx)} circleSize={16} fontSize={12} />
+                  </div>
+                ))}
+              </React.Fragment>
+            )
+          )}
         </div>
 
         {/* Instructions */}
@@ -1845,7 +1850,7 @@ const MobileDetail: React.FC<{
         <div style={{ display: "flex", gap: 6 }}>
           {(
             [
-              ["clock", "—"],
+              ["clock", recipe.preparationTime > 0 ? `${recipe.preparationTime} min` : "—"],
               ["users", String(servings)],
             ] as [string, string][]
           ).map(([ic, label]) => (
@@ -1883,7 +1888,7 @@ const MobileDetail: React.FC<{
           padding: "12px 0 10px",
         }}
       >
-        {MOBILE_ACTIONS.map((a) => (
+        {ACTIONS.map((a) => (
           <ActionBtn
             key={a.id}
             {...a}
@@ -1895,6 +1900,13 @@ const MobileDetail: React.FC<{
           />
         ))}
       </div>
+
+      {/* Description */}
+      {recipe.description && (
+        <p style={{ margin: "14px 18px 0", fontSize: 13, color: "var(--text-soft)", lineHeight: 1.6 }}>
+          {recipe.description}
+        </p>
+      )}
 
       {/* Tab bar */}
       <div
@@ -1956,27 +1968,28 @@ const MobileDetail: React.FC<{
         }}
       >
         {tab === "ingredients" ? (
-          ingredients.map((ing, i) => (
-            <div
-              key={i}
-              style={{
-                borderBottom:
-                  i < ingredients.length - 1
-                    ? "1px solid var(--border)"
-                    : "none",
-              }}
-            >
-              <IngItem
-                ing={ing}
-                index={i}
-                servings={servings}
-                checked={checkedIng.includes(i)}
-                onToggle={() => toggleIng(i)}
-                circleSize={20}
-                fontSize={14}
-              />
-            </div>
-          ))
+          groupIngredients(ingredients).map((section, si) =>
+            section.header ? (
+              <div key={si} style={{ margin: "8px 10px", border: "1px solid var(--olive-light)", borderRadius: 10, overflow: "hidden" }}>
+                <div style={{ padding: "6px 14px", background: "var(--olive-faint)", fontSize: 11, fontWeight: 700, color: "var(--olive)", textTransform: "uppercase", letterSpacing: "0.06em" }}>
+                  {section.header}
+                </div>
+                {section.items.map(({ ing, idx }) => (
+                  <div key={idx} style={{ borderTop: "1px solid var(--border)" }}>
+                    <IngItem ing={ing} index={idx} servings={servings} checked={checkedIng.includes(idx)} onToggle={() => toggleIng(idx)} circleSize={20} fontSize={14} />
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <React.Fragment key={si}>
+                {section.items.map(({ ing, idx }, j) => (
+                  <div key={idx} style={{ borderBottom: j < section.items.length - 1 ? "1px solid var(--border)" : "none" }}>
+                    <IngItem ing={ing} index={idx} servings={servings} checked={checkedIng.includes(idx)} onToggle={() => toggleIng(idx)} circleSize={20} fontSize={14} />
+                  </div>
+                ))}
+              </React.Fragment>
+            )
+          )
         ) : (
           <>
             {steps.map((step, i) => (
@@ -2096,6 +2109,7 @@ export const RecipeDetailPage: React.FC = () => {
   const navigate = useNavigate();
   const bp = useBreakpoint();
 
+  const editDialogRef = useRef<EditRecipeDialogHandle>(null);
   const [recipe, setRecipe] = useState<Recipe | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [liked, setLiked] = useState(false);
@@ -2107,7 +2121,7 @@ export const RecipeDetailPage: React.FC = () => {
   const [rating, setRating] = useState(0);
   const [tab, setTab] = useState<"ingredients" | "steps">("ingredients");
 
-  useEffect(() => {
+  const fetchRecipe = () => {
     fetch(`/api/recipe/${id}`)
       .then((r) => {
         if (!r.ok) throw new Error(`${r.status}`);
@@ -2115,7 +2129,9 @@ export const RecipeDetailPage: React.FC = () => {
       })
       .then(setRecipe)
       .catch((e: Error) => setError(e.message));
-  }, [id]);
+  };
+
+  useEffect(() => { fetchRecipe(); }, [id]);
 
   const toggleStep = (i: number) =>
     setCheckedSteps((p) =>
@@ -2125,8 +2141,11 @@ export const RecipeDetailPage: React.FC = () => {
     setCheckedIng((p) =>
       p.includes(i) ? p.filter((x) => x !== i) : [...p, i]
     );
-  const toggleAction = (a: string) =>
+  const toggleAction = (a: string) => {
+    if (a === "edit") { if (recipe) editDialogRef.current?.open(recipe); return; }
     setActiveAction((p) => (p === a ? null : a));
+  };
+  const openEdit = () => { if (recipe) editDialogRef.current?.open(recipe); };
 
   if (error) {
     return (
@@ -2151,7 +2170,7 @@ export const RecipeDetailPage: React.FC = () => {
   }
 
   const ingredients = parseLines(recipe.ingredients).map(parseIngLine);
-  const steps = parseLines(recipe.instructions);
+  const steps = parseLines(recipe.instructions).map((s) => s.replace(/^\d+\.\s*/, ""));
   const imageUrl = recipe.imagePath
     ? `http://localhost:5109/images/${recipe.imagePath}`
     : null;
@@ -2172,6 +2191,7 @@ export const RecipeDetailPage: React.FC = () => {
     activeAction,
     toggleAction,
     onBack: () => navigate("/recipes"),
+    onEdit: openEdit,
   };
 
   return (
@@ -2189,6 +2209,7 @@ export const RecipeDetailPage: React.FC = () => {
           setRating={setRating}
         />
       )}
+      <EditRecipeDialog ref={editDialogRef} onSaved={fetchRecipe} />
     </div>
   );
 };

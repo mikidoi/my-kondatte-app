@@ -1,6 +1,4 @@
-interface Recipe {
-  imagePath?: string;
-}
+import { Recipe } from "../types/recipe";
 
 function getImageUrl(recipe: Recipe): string | null {
   return recipe.imagePath

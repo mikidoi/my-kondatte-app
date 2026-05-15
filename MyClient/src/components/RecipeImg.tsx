@@ -1,12 +1,7 @@
 import React, { useState } from "react";
 import getImageUrl from "../helpers/getImageUrl";
 import getPlaceholderColors from "../helpers/getPlaceholderColors";
-
-interface Recipe {
-  id: number;
-  name: string;
-  imagePath?: string;
-}
+import { Recipe } from "../types/recipe";
 
 const RecipeImg: React.FC<{ recipe: Recipe; style?: React.CSSProperties }> = ({
   recipe,

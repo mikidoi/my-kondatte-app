@@ -10,14 +10,7 @@ import IcoPlus from "../icons/IcoPlus";
 import FilterSheet from "./FilterSheet";
 import RecipeGridCard from "../../pages/recipes/components/RecipeGridCard";
 import RecipeListRow from "../../pages/recipes/components/RecipeListRow";
-
-interface Recipe {
-  id: number;
-  name: string;
-  ingredients: string;
-  instructions: string;
-  imagePath?: string;
-}
+import { Recipe } from "../../types/recipe";
 
 type ViewMode = "grid" | "list";
 type SortBy = "Recent" | "Rating" | "Quickest";

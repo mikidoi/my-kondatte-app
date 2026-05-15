@@ -6,10 +6,9 @@ import React, {
 } from "react";
 import useBreakpoint from "../hooks/useBreakpoint";
 import IcoBack from "./icons/IcoBack";
-import IcoCamera from "./icons/IcoCamera";
 import IcoCheck from "./icons/IcoCheck";
 import IcoClose from "./icons/IcoClose";
-import IcoPlus from "./icons/IcoPlus";
+import IcoTrash from "./icons/IcoTrash";
 import "./CreateRecipeDialog.css";
 import Card from "./layout/Card";
 import SectionHead from "./layout/SectionHead";
@@ -19,27 +18,19 @@ import TextInput from "./form/TextInput";
 import IngredientRows, { IngredientItem } from "./recipe/IngredientRows";
 import InstructionSteps, { InstructionStep } from "./recipe/InstructionSteps";
 import { recipeApi } from "../api/recipe-api";
+import type { Recipe } from "../types/recipe";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
-export interface CreateRecipeDialogHandle {
-  open: () => void;
+export interface EditRecipeDialogHandle {
+  open: (recipe: Recipe) => void;
 }
 
-interface CreateRecipeDialogProps {
-  onSubmit: (recipe: {
-    name: string;
-    description: string;
-    category: string;
-    preparationTime: number;
-    servesCount: number;
-    ingredients: string;
-    instructions: string;
-    image: File | null;
-  }) => void;
+interface EditRecipeDialogProps {
+  onSaved?: () => void;
 }
 
-// ── Serialization ─────────────────────────────────────────────────────────────
+// ── Serialization / parsing ───────────────────────────────────────────────────
 
 function serializeIngredients(items: IngredientItem[]): string {
   return items
@@ -60,6 +51,29 @@ function serializeInstructions(steps: InstructionStep[]): string {
     .join("\n");
 }
 
+function parseIngredients(text: string): IngredientItem[] {
+  const lines = text.split("\n").filter((l) => l.trim());
+  if (lines.length === 0)
+    return [
+      {
+        type: "ingredient" as const,
+        id: Date.now(),
+        qty: "",
+        unit: "",
+        name: "",
+        note: "",
+      },
+    ];
+  return lines.map((line, i) => ({
+    type: "ingredient" as const,
+    id: Date.now() + i,
+    qty: "",
+    unit: "",
+    name: line.trim(),
+    note: "",
+  }));
+}
+
 function parseInstructions(text: string): InstructionStep[] {
   const lines = text
     .split("\n")
@@ -69,31 +83,115 @@ function parseInstructions(text: string): InstructionStep[] {
   return lines.map((t, i) => ({ id: Date.now() + i, text: t }));
 }
 
-function parseIngredients(_text: string): IngredientItem[] {
-  const lines = _text.split("\n").filter((line) => line.trim());
+// ── Existing image slot ───────────────────────────────────────────────────────
 
-  const ingredients = lines.map((line, index) => ({
-    type: "ingredient" as const,
-    id: Date.now() + index,
-    qty: "",
-    unit: "",
-    name: line.trim(),
-    note: "",
-  }));
-  return ingredients.length > 0
-    ? ingredients
-    : [{ type: "ingredient" as const, id: Date.now(), qty: "", unit: "", name: "", note: "" }];
-}
+const ExistingPhotoSlot: React.FC<{
+  url: string;
+  onReplace: () => void;
+  onRemove: () => void;
+}> = ({ url, onReplace, onRemove }) => {
+  const [hover, setHover] = useState(false);
+  return (
+    <div
+      onMouseEnter={() => setHover(true)}
+      onMouseLeave={() => setHover(false)}
+      style={{
+        position: "relative",
+        width: 120,
+        height: 120,
+        borderRadius: 12,
+        overflow: "hidden",
+        border: "1.5px solid var(--olive)",
+      }}
+    >
+      <img
+        src={url}
+        alt="Recipe"
+        style={{
+          width: "100%",
+          height: "100%",
+          objectFit: "cover",
+          display: "block",
+        }}
+      />
+      <div
+        style={{
+          position: "absolute",
+          top: 6,
+          left: 6,
+          padding: "3px 8px",
+          borderRadius: 20,
+          background: "var(--olive)",
+          color: "#fff",
+          fontSize: 10,
+          fontWeight: 700,
+        }}
+      >
+        Cover
+      </div>
+      <div
+        style={{
+          position: "absolute",
+          left: 0,
+          right: 0,
+          bottom: 0,
+          padding: 6,
+          background: "linear-gradient(to top, rgba(0,0,0,0.55), transparent)",
+          opacity: hover ? 1 : 0,
+          transition: "opacity 0.15s",
+          display: "flex",
+          gap: 4,
+        }}
+      >
+        <button
+          type="button"
+          onClick={onReplace}
+          style={{
+            flex: 1,
+            padding: "5px 6px",
+            borderRadius: 6,
+            background: "rgba(255,255,255,0.94)",
+            color: "var(--text)",
+            fontSize: 10,
+            fontWeight: 700,
+            border: "none",
+            cursor: "pointer",
+          }}
+        >
+          Change
+        </button>
+        <button
+          type="button"
+          onClick={onRemove}
+          style={{
+            padding: "5px 6px",
+            borderRadius: 6,
+            background: "rgba(255,255,255,0.94)",
+            color: "#c44a3a",
+            fontSize: 10,
+            fontWeight: 700,
+            border: "none",
+            cursor: "pointer",
+          }}
+        >
+          <IcoTrash size={11} />
+        </button>
+      </div>
+    </div>
+  );
+};
 
 // ── Main component ────────────────────────────────────────────────────────────
 
-const CreateRecipeDialog = forwardRef<
-  CreateRecipeDialogHandle,
-  CreateRecipeDialogProps
->(({ onSubmit }, ref) => {
+const EditRecipeDialog = forwardRef<
+  EditRecipeDialogHandle,
+  EditRecipeDialogProps
+>(({ onSaved }, ref) => {
   const bp = useBreakpoint();
   const dialogRef = useRef<HTMLDialogElement>(null);
+  const imageInputRef = useRef<HTMLInputElement>(null);
 
+  const [recipeId, setRecipeId] = useState(0);
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
   const [category, setCategory] = useState("");
@@ -105,152 +203,61 @@ const CreateRecipeDialog = forwardRef<
   const [instructions, setInstructions] = useState<InstructionStep[]>([
     { id: 1, text: "" },
   ]);
-  const [image, setImage] = useState<File | null>(null);
+  const [existingImagePath, setExistingImagePath] = useState<string | null>(
+    null
+  );
+  const [newImage, setNewImage] = useState<File | null>(null);
   const [tab, setTab] = useState<"about" | "ingredients" | "steps">("about");
-  const scanInputRef = useRef<HTMLInputElement>(null);
-  const [scanning, setScanning] = useState(false);
-  const [scanLanguage, setScanLanguage] = useState("English");
-  const [scanError, setScanError] = useState<string | null>(null);
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   useImperativeHandle(ref, () => ({
-    open: () => {
+    open: (recipe: Recipe) => {
+      setRecipeId(recipe.id);
+      setName(recipe.name);
+      setDescription(recipe.description);
+      setCategory(recipe.category);
+      setPreparationTime(recipe.preparationTime);
+      setServesCount(recipe.servesCount);
+      setIngredients(parseIngredients(recipe.ingredients));
+      setInstructions(parseInstructions(recipe.instructions));
+      setExistingImagePath(recipe.imagePath ?? null);
+      setNewImage(null);
       setTab("about");
+      setError(null);
       dialogRef.current?.showModal();
     },
   }));
 
-  const reset = () => {
-    setName("");
-    setDescription("");
-    setCategory("");
-    setPreparationTime(0);
-    setServesCount(1);
-    setIngredients([
-      {
-        type: "ingredient",
-        id: Date.now(),
-        qty: "",
-        unit: "",
-        name: "",
-        note: "",
-      },
-    ]);
-    setInstructions([{ id: Date.now(), text: "" }]);
-    setImage(null);
-  };
-
   const close = () => dialogRef.current?.close();
 
-  const handleScanFile = async (file: File) => {
-    setImage(file);
-    setScanning(true);
-    setScanError(null);
+  const handleSubmit = async (e: React.FormEvent) => {
     try {
-      const result = await recipeApi.scanRecipe(file, scanLanguage);
-      setName(result.name);
-      setDescription(result.description);
-      setCategory(result.category);
-      setIngredients(parseIngredients(result.ingredients));
-      setInstructions(parseInstructions(result.instructions));
-    } catch {
-      setScanError("Could not scan the recipe. Please try again.");
+      setSaving(true);
+      e.preventDefault();
+      if (!name.trim()) return;
+      const formData = new FormData();
+      formData.append("name", name.trim());
+      formData.append("description", description.trim());
+      formData.append("category", category.trim());
+      formData.append("preparationTime", preparationTime.toString());
+      formData.append("servesCount", servesCount.toString());
+      formData.append("ingredients", serializeIngredients(ingredients));
+      formData.append("instructions", serializeInstructions(instructions));
+      if (newImage) {
+        formData.append("file", newImage);
+      }
+      await recipeApi.editRecipe(recipeId, formData);
+      close();
+      onSaved?.();
+    } catch (error) {
+      setError("Failed to save recipe. Please try again.");
     } finally {
-      setScanning(false);
+      setSaving(false);
     }
   };
 
-  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    if (!name.trim()) return;
-    onSubmit({
-      name: name.trim(),
-      description: description.trim(),
-      category: category.trim(),
-      preparationTime,
-      servesCount,
-      ingredients: serializeIngredients(ingredients),
-      instructions: serializeInstructions(instructions),
-      image,
-    });
-    reset();
-    close();
-  };
-
   const isMobile = bp === "mobile";
-
-  const scanBanner = (
-    <div
-      style={{
-        padding: "12px 14px",
-        background: "var(--olive-faint)",
-        border: "1.5px solid var(--olive-pale)",
-        borderRadius: 12,
-        display: "flex",
-        flexDirection: "column",
-        gap: 10,
-      }}
-    >
-      <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-        <IcoCamera size={15} />
-        <span style={{ fontSize: 13, fontWeight: 600, color: "var(--text)" }}>
-          Scan &amp; translate recipe
-        </span>
-      </div>
-      <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
-        <span
-          style={{
-            fontSize: 12,
-            color: "var(--text-soft)",
-            whiteSpace: "nowrap",
-          }}
-        >
-          Translate to
-        </span>
-        <select
-          value={scanLanguage}
-          onChange={(e) => setScanLanguage(e.target.value)}
-          style={{
-            flex: 1,
-            padding: "6px 10px",
-            borderRadius: 8,
-            border: "1.5px solid var(--border)",
-            background: "var(--white)",
-            fontSize: 13,
-            color: "var(--text)",
-            fontFamily: "DM Sans, sans-serif",
-          }}
-        >
-          <option value="English">English</option>
-          <option value="Japanese">Japanese</option>
-          <option value="Swedish">Swedish</option>
-        </select>
-        <button
-          type="button"
-          disabled={scanning}
-          onClick={() => scanInputRef.current?.click()}
-          style={{
-            display: "flex",
-            alignItems: "center",
-            gap: 6,
-            padding: "7px 14px",
-            borderRadius: 8,
-            background: scanning ? "var(--border)" : "var(--olive)",
-            color: "#fff",
-            fontSize: 12,
-            fontWeight: 600,
-            cursor: scanning ? "not-allowed" : "pointer",
-            whiteSpace: "nowrap",
-          }}
-        >
-          <IcoCamera size={12} /> {scanning ? "Scanning…" : "Choose photo"}
-        </button>
-      </div>
-      {scanError && (
-        <p style={{ fontSize: 11, color: "#c44a3a", margin: 0 }}>{scanError}</p>
-      )}
-    </div>
-  );
-
   const ingCount = ingredients.filter(
     (r) => r.type === "ingredient" && r.name.trim()
   ).length;
@@ -261,6 +268,43 @@ const CreateRecipeDialog = forwardRef<
     { id: "ingredients" as const, label: "Ingredients", count: ingCount },
     { id: "steps" as const, label: "Steps", count: stepCount },
   ];
+
+  const photoSection = (
+    <>
+      <input
+        ref={imageInputRef}
+        type="file"
+        accept="image/*"
+        style={{ display: "none" }}
+        onChange={(e) => {
+          if (e.target.files?.[0]) {
+            setNewImage(e.target.files[0]);
+            setExistingImagePath(null);
+          }
+          e.target.value = "";
+        }}
+      />
+      {newImage ? (
+        <PhotoSlot
+          file={newImage}
+          onSelect={setNewImage}
+          onRemove={() => setNewImage(null)}
+        />
+      ) : existingImagePath ? (
+        <ExistingPhotoSlot
+          url={`/images/${existingImagePath}`}
+          onReplace={() => imageInputRef.current?.click()}
+          onRemove={() => setExistingImagePath(null)}
+        />
+      ) : (
+        <PhotoSlot
+          file={null}
+          onSelect={setNewImage}
+          onRemove={() => setNewImage(null)}
+        />
+      )}
+    </>
+  );
 
   const dialogStyle: React.CSSProperties = isMobile
     ? {
@@ -302,20 +346,8 @@ const CreateRecipeDialog = forwardRef<
           overflow: "hidden",
         }}
       >
-        <input
-          ref={scanInputRef}
-          type="file"
-          accept="image/*"
-          capture="environment"
-          style={{ display: "none" }}
-          onChange={(e) => {
-            if (e.target.files?.[0]) handleScanFile(e.target.files[0]);
-            e.target.value = "";
-          }}
-        />
         {isMobile ? (
           <>
-            {/* ── Mobile header ── */}
             <div
               style={{
                 display: "flex",
@@ -351,27 +383,27 @@ const CreateRecipeDialog = forwardRef<
                   color: "var(--text)",
                 }}
               >
-                New recipe
+                Edit recipe
               </h2>
               <button
                 type="submit"
+                disabled={saving}
                 style={{
                   display: "flex",
                   alignItems: "center",
                   gap: 5,
                   padding: "8px 14px",
                   borderRadius: 9,
-                  background: "var(--olive)",
+                  background: saving ? "var(--border)" : "var(--olive)",
                   color: "#fff",
                   fontSize: 13,
                   fontWeight: 600,
                 }}
               >
-                <IcoCheck size={13} /> Save
+                <IcoCheck size={13} /> {saving ? "Saving…" : "Save"}
               </button>
             </div>
 
-            {/* ── Mobile tabs ── */}
             <div
               style={{
                 display: "flex",
@@ -425,24 +457,14 @@ const CreateRecipeDialog = forwardRef<
               ))}
             </div>
 
-            {/* ── Mobile body ── */}
             <div
               className="crd-scroll"
-              style={{
-                flex: 1,
-                overflowY: "auto",
-                padding: "14px 14px 40px",
-              }}
+              style={{ flex: 1, overflowY: "auto", padding: "14px 14px 40px" }}
             >
               {tab === "about" && (
                 <div
-                  style={{
-                    display: "flex",
-                    flexDirection: "column",
-                    gap: 14,
-                  }}
+                  style={{ display: "flex", flexDirection: "column", gap: 14 }}
                 >
-                  {scanBanner}
                   <div>
                     <p
                       style={{
@@ -455,11 +477,7 @@ const CreateRecipeDialog = forwardRef<
                     >
                       Photo
                     </p>
-                    <PhotoSlot
-                      file={image}
-                      onSelect={setImage}
-                      onRemove={() => setImage(null)}
-                    />
+                    {photoSection}
                   </div>
                   <Field label="Recipe name" hint={`${name.length}/80`}>
                     <TextInput
@@ -532,6 +550,9 @@ const CreateRecipeDialog = forwardRef<
                       />
                     </Field>
                   </div>
+                  {error && (
+                    <p style={{ fontSize: 12, color: "#c44a3a" }}>{error}</p>
+                  )}
                 </div>
               )}
               {tab === "ingredients" && (
@@ -551,7 +572,6 @@ const CreateRecipeDialog = forwardRef<
           </>
         ) : (
           <>
-            {/* ── Desktop header ── */}
             <div
               style={{
                 display: "flex",
@@ -563,33 +583,22 @@ const CreateRecipeDialog = forwardRef<
                 flexShrink: 0,
               }}
             >
-              <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
-                <div
-                  style={{
-                    width: 38,
-                    height: 38,
-                    borderRadius: 10,
-                    background: "var(--olive-pale)",
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    color: "var(--olive)",
-                  }}
-                >
-                  <IcoPlus size={20} />
-                </div>
-                <h2
-                  style={{
-                    fontFamily: "DM Serif Display, serif",
-                    fontSize: 22,
-                    fontWeight: 400,
-                    color: "var(--text)",
-                  }}
-                >
-                  New recipe
-                </h2>
-              </div>
+              <h2
+                style={{
+                  fontFamily: "DM Serif Display, serif",
+                  fontSize: 22,
+                  fontWeight: 400,
+                  color: "var(--text)",
+                }}
+              >
+                Edit recipe
+              </h2>
               <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                {error && (
+                  <span style={{ fontSize: 12, color: "#c44a3a" }}>
+                    {error}
+                  </span>
+                )}
                 <button
                   type="button"
                   onClick={close}
@@ -608,20 +617,21 @@ const CreateRecipeDialog = forwardRef<
                 </button>
                 <button
                   type="submit"
+                  disabled={saving}
                   style={{
                     display: "flex",
                     alignItems: "center",
                     gap: 6,
                     padding: "8px 18px",
                     borderRadius: 9,
-                    background: "var(--olive)",
+                    background: saving ? "var(--border)" : "var(--olive)",
                     color: "#fff",
                     fontSize: 13,
                     fontWeight: 600,
-                    cursor: "pointer",
+                    cursor: saving ? "not-allowed" : "pointer",
                   }}
                 >
-                  <IcoCheck size={14} /> Save recipe
+                  <IcoCheck size={14} /> {saving ? "Saving…" : "Save changes"}
                 </button>
                 <div
                   style={{
@@ -651,7 +661,6 @@ const CreateRecipeDialog = forwardRef<
               </div>
             </div>
 
-            {/* ── Desktop body ── */}
             <div
               className="crd-scroll"
               style={{ flex: 1, overflowY: "auto", padding: 24 }}
@@ -663,7 +672,6 @@ const CreateRecipeDialog = forwardRef<
                   gap: 20,
                 }}
               >
-                {/* Left: About + Photo */}
                 <div
                   style={{
                     display: "flex",
@@ -672,7 +680,6 @@ const CreateRecipeDialog = forwardRef<
                     minWidth: 0,
                   }}
                 >
-                  <Card>{scanBanner}</Card>
                   <Card>
                     <SectionHead title="About" />
                     <div
@@ -757,18 +764,12 @@ const CreateRecipeDialog = forwardRef<
                       </Field>
                     </div>
                   </Card>
-
                   <Card>
                     <SectionHead title="Photo" />
-                    <PhotoSlot
-                      file={image}
-                      onSelect={setImage}
-                      onRemove={() => setImage(null)}
-                    />
+                    {photoSection}
                   </Card>
                 </div>
 
-                {/* Right: Ingredients + Instructions */}
                 <div
                   style={{
                     display: "flex",
@@ -784,7 +785,6 @@ const CreateRecipeDialog = forwardRef<
                       onChange={setIngredients}
                     />
                   </Card>
-
                   <Card>
                     <SectionHead title="Instructions" count={stepCount} />
                     <InstructionSteps
@@ -802,6 +802,6 @@ const CreateRecipeDialog = forwardRef<
   );
 });
 
-CreateRecipeDialog.displayName = "CreateRecipeDialog";
+EditRecipeDialog.displayName = "EditRecipeDialog";
 
-export default CreateRecipeDialog;
+export default EditRecipeDialog;

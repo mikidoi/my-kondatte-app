@@ -3,14 +3,7 @@ import { Link } from "react-router-dom";
 import RecipeImg from "../../../components/RecipeImg";
 import IcoHeart from "../../../components/icons/IcoHeart";
 import IcoTrash from "../../../components/icons/IcoTrash";
-
-interface Recipe {
-  id: number;
-  name: string;
-  ingredients: string;
-  instructions: string;
-  imagePath?: string;
-}
+import { Recipe } from "../../../types/recipe";
 
 const RecipeListRow: React.FC<{
   recipe: Recipe;
