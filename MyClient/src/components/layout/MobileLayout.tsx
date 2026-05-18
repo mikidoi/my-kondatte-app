@@ -27,6 +27,7 @@ const MobileLayout: React.FC<{
   toggleLike: (id: number) => void;
   deleteRecipe: (id: number) => void;
   onNewRecipe: () => void;
+  filterSheetProps: React.ComponentProps<typeof FilterSheet>;
 }> = ({
   filtered,
   search,
@@ -41,6 +42,7 @@ const MobileLayout: React.FC<{
   toggleLike,
   deleteRecipe,
   onNewRecipe,
+  filterSheetProps,
 }) => (
   <div style={{ minHeight: "100vh", background: "var(--bg)", display: "flex", flexDirection: "column" }}>
     {/* Status bar */}
@@ -141,7 +143,7 @@ const MobileLayout: React.FC<{
       )}
     </div>
 
-    <FilterSheet open={filterOpen} onClose={() => setFilterOpen(false)} sortBy={sortBy} onSort={setSortBy} />
+    <FilterSheet {...filterSheetProps} />
     <BottomNav />
   </div>
 );

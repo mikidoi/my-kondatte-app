@@ -10,7 +10,9 @@ import SearchBar from "../../components/SearchBar";
 import ViewToggle from "../../components/buttons/ViewToggle";
 import IcoChevL from "../../components/icons/IcoChevL";
 import IcoChevR from "../../components/icons/IcoChevR";
+import IcoFilter from "../../components/icons/IcoFilter";
 import IcoPlus from "../../components/icons/IcoPlus";
+import FilterSheet from "../../components/layout/FilterSheet";
 import RecipeGridCard from "./components/RecipeGridCard";
 import RecipeListRow from "./components/RecipeListRow";
 import "./RecipeListPage.css";
@@ -33,6 +35,8 @@ export const RecipeListPage: React.FC = () => {
   const [filterOpen, setFilterOpen] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [likedIds, setLikedIds] = useState<Set<number>>(new Set());
+  const [favoritesOnly, setFavoritesOnly] = useState(false);
+  const [maxPrepTime, setMaxPrepTime] = useState(0);
 
   useEffect(() => {
     fetch("/api/recipe")
@@ -99,11 +103,25 @@ export const RecipeListPage: React.FC = () => {
       list = list.filter((r) =>
         r.name.toLowerCase().includes(search.toLowerCase())
       );
-    if (sortBy === "Rating")
-      list = list.sort((a, b) => a.name.localeCompare(b.name));
-    if (sortBy === "Quickest") list = list.sort((a, b) => a.id - b.id);
+    if (favoritesOnly) list = list.filter((r) => likedIds.has(r.id));
+    if (maxPrepTime > 0) list = list.filter((r) => r.preparationTime === 0 || r.preparationTime <= maxPrepTime);
+    if (sortBy === "Rating") list = list.sort((a, b) => a.name.localeCompare(b.name));
+    if (sortBy === "Quickest") list = list.sort((a, b) => a.preparationTime - b.preparationTime);
     return list;
-  }, [recipes, search, sortBy]);
+  }, [recipes, search, sortBy, favoritesOnly, maxPrepTime, likedIds]);
+
+  const filterSheetProps = {
+    open: filterOpen,
+    onClose: () => setFilterOpen(false),
+    total: recipes.length,
+    filteredCount: filtered.length,
+    sortBy,
+    onSortBy: setSortBy,
+    favoritesOnly,
+    onFavoritesOnly: setFavoritesOnly,
+    maxPrepTime,
+    onMaxPrepTime: setMaxPrepTime,
+  };
 
   const shared = {
     filtered,
@@ -117,6 +135,7 @@ export const RecipeListPage: React.FC = () => {
     toggleLike,
     deleteRecipe,
     onNewRecipe: () => formRef.current?.open(),
+    filterSheetProps,
   };
 
   if (error) {
@@ -319,9 +338,26 @@ export const RecipeListPage: React.FC = () => {
                 </div>
               </div>
 
-              <div style={{ marginBottom: 24 }}>
+              <div style={{ marginBottom: 24, display: "flex", gap: 10 }}>
                 <SearchBar value={search} onChange={setSearch} />
+                <button
+                  onClick={() => setFilterOpen(true)}
+                  style={{
+                    display: "flex", alignItems: "center", gap: 6,
+                    padding: "0 16px", borderRadius: 10, flexShrink: 0,
+                    border: `1.5px solid ${favoritesOnly || maxPrepTime > 0 ? "var(--olive)" : "var(--border)"}`,
+                    background: favoritesOnly || maxPrepTime > 0 ? "var(--olive-pale)" : "var(--white)",
+                    color: favoritesOnly || maxPrepTime > 0 ? "var(--olive)" : "var(--text-mid)",
+                    fontSize: 13, fontWeight: 600, cursor: "pointer",
+                  }}
+                >
+                  <IcoFilter /> Filter
+                  {(favoritesOnly || maxPrepTime > 0) && (
+                    <span style={{ width: 6, height: 6, borderRadius: "50%", background: "var(--olive)", flexShrink: 0 }} />
+                  )}
+                </button>
               </div>
+              <FilterSheet {...filterSheetProps} />
 
               {viewMode === "grid" ? (
                 <div
