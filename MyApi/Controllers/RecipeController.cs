@@ -32,7 +32,7 @@ public class RecipeController : ControllerBase
     [HttpGet]
     public async Task<ActionResult<IEnumerable<Recipe>>> GetRecipes()
     {
-        return await _context.Recipes.ToListAsync();
+        return await _context.Recipes.Include(r => r.Categories).ToListAsync();
     }
 
     [HttpGet("{id}")]
@@ -40,7 +40,7 @@ public class RecipeController : ControllerBase
     {
         if(id <= 0)
             return BadRequest("Invalid recipe ID.");
-        var recipe = await _context.Recipes.FindAsync(id);
+        var recipe = await _context.Recipes.Include(r => r.Categories).FirstOrDefaultAsync(r => r.Id == id);
         if (recipe == null)
             return NotFound();
         return Ok(recipe);
@@ -52,7 +52,7 @@ public class RecipeController : ControllerBase
         if(string.IsNullOrWhiteSpace(query))
         return BadRequest("Query cannot be empty.");
 
-        var recipes = await _context.Recipes.Where(r => r.Name.Contains(query) || r.Description.Contains(query))
+        var recipes = await _context.Recipes.Include(r => r.Categories).Where(r => r.Name.Contains(query) || r.Description.Contains(query))
             .ToListAsync();
         return Ok(recipes);
     }
