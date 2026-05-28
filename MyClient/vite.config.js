@@ -18,6 +18,10 @@ export default defineConfig({
         changeOrigin: true,
         ws: true, // ← critical for WebSockets (SignalR)
       },
+      "/images": {
+        target: "http://127.0.0.1:5109",
+        changeOrigin: true,
+      },
     },
   },
 });
