@@ -9,7 +9,7 @@ public class RecipeEditDto
     public string Description { get; set; } = string.Empty;
 
     [Required]
-    public string Category { get; set; } = string.Empty;
+    public List<string> Categories { get; set; } = [];
 
     public int PreparationTime { get; set; } // in minutes
 

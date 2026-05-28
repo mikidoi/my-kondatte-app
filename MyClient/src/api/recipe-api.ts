@@ -14,11 +14,17 @@ export const recipeApi = {
     return await response.json();
   },
 
-  scanRecipe: async (file: File, targetLanguage: string): Promise<ScannedRecipeResult> => {
+  scanRecipe: async (
+    file: File,
+    targetLanguage: string
+  ): Promise<ScannedRecipeResult> => {
     const form = new FormData();
     form.append("file", file);
     form.append("targetLanguage", targetLanguage);
-    const response = await fetch("/api/recipe/scan", { method: "POST", body: form });
+    const response = await fetch("/api/recipe/scan", {
+      method: "POST",
+      body: form,
+    });
     if (!response.ok) throw new Error(`Scan failed: ${response.status}`);
     return response.json();
   },
@@ -29,5 +35,12 @@ export const recipeApi = {
       body: request,
     });
     if (!response.ok) throw new Error(`Edit failed: ${response.status}`);
+  },
+
+  getCategories: async (): Promise<string[]> => {
+    const response = await fetch("/api/recipe/categories");
+    if (!response.ok)
+      throw new Error(`Failed to fetch categories: ${response.status}`);
+    return response.json();
   },
 };

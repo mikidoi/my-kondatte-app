@@ -1,13 +1,24 @@
 import React, { useState } from "react";
 
 const TextInput: React.FC<{
+  id?: string;
   value: string;
   onChange: (v: string) => void;
+  onEnter?: () => void;
   placeholder?: string;
   multiline?: boolean;
   rows?: number;
   size?: "sm" | "md";
-}> = ({ value, onChange, placeholder, multiline, rows = 3, size: sz = "md" }) => {
+}> = ({
+  id,
+  value,
+  onChange,
+  onEnter,
+  placeholder,
+  multiline,
+  rows = 3,
+  size: sz = "md",
+}) => {
   const [focus, setFocus] = useState(false);
   const style: React.CSSProperties = {
     width: "100%",
@@ -26,6 +37,7 @@ const TextInput: React.FC<{
   if (multiline) {
     return (
       <textarea
+        id={id}
         rows={rows}
         value={value}
         onChange={(e) => onChange(e.target.value)}
@@ -38,12 +50,18 @@ const TextInput: React.FC<{
   }
   return (
     <input
+      id={id}
       type="text"
       value={value}
       onChange={(e) => onChange(e.target.value)}
       placeholder={placeholder}
       onFocus={() => setFocus(true)}
       onBlur={() => setFocus(false)}
+      onKeyDown={(e) => {
+        if (e.key === "Enter") {
+          onEnter?.();
+        }
+      }}
       style={style}
     />
   );

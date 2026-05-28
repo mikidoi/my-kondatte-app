@@ -18,6 +18,8 @@ public class RecipeController : ControllerBase
     private readonly IHttpClientFactory _httpClientFactory;
     private readonly IConfiguration _configuration;
 
+    private readonly ILogger<RecipeController> _logger;
+
     public RecipeController(IHubContext<RecipeHub> hubContext, AppDbContext context,
         IHttpClientFactory httpClientFactory, IConfiguration configuration)
     {
@@ -36,10 +38,34 @@ public class RecipeController : ControllerBase
     [HttpGet("{id}")]
     public async Task<ActionResult<Recipe>> GetRecipe(int id)
     {
+        if(id <= 0)
+            return BadRequest("Invalid recipe ID.");
         var recipe = await _context.Recipes.FindAsync(id);
         if (recipe == null)
             return NotFound();
         return Ok(recipe);
+    }
+
+    [HttpGet("search")]
+    public async Task<ActionResult<IEnumerable<Recipe>>> SearchRecipes([FromQuery] string query)
+    {
+        if(string.IsNullOrWhiteSpace(query))
+        return BadRequest("Query cannot be empty.");
+
+        var recipes = await _context.Recipes.Where(r => r.Name.Contains(query) || r.Description.Contains(query))
+            .ToListAsync();
+        return Ok(recipes);
+    }
+
+    [HttpGet("categories")]
+    public async Task<ActionResult<IEnumerable<string>>> GetCategories()
+    {
+        var categories = await _context.Categories
+            .Where(c => c.Name != "")
+            .Select(c => c.Name)
+            .Distinct()
+            .ToListAsync();
+        return Ok(categories);
     }
 
     [HttpPost("upload")]
@@ -69,11 +95,19 @@ public class RecipeController : ControllerBase
         }
 
 
+        var categoryEntities = new List<Category>();
+        foreach (var name in dto.Categories.Where(n => !string.IsNullOrWhiteSpace(n)))
+        {
+            var category = await _context.Categories.FirstOrDefaultAsync(c => c.Name == name)
+                           ?? new Category { Name = name };
+            categoryEntities.Add(category);
+        }
+
         var recipe = new Recipe
         {
             Name = dto.Name,
             Description = dto.Description,
-            Category = dto.Category,
+            Categories = categoryEntities,
             PreparationTime = dto.PreparationTime,
             ServesCount = dto.ServesCount,
             Ingredients = dto.Ingredients,
@@ -83,7 +117,7 @@ public class RecipeController : ControllerBase
 
         _context.Recipes.Add(recipe);
         await _context.SaveChangesAsync();
-        await _hubContext.Clients.All.SendAsync("RecipeCreated", recipe);
+
 
         return CreatedAtAction(nameof(GetRecipes), new { id = recipe.Id }, recipe);
     }
@@ -91,13 +125,18 @@ public class RecipeController : ControllerBase
     [HttpPut("{id}")]
     public async Task<IActionResult> EditRecipe(int id, [FromForm] RecipeEditDto dto)
     {
-        var recipe = await _context.Recipes.FindAsync(id);
+        var recipe = await _context.Recipes.Include(r => r.Categories).FirstOrDefaultAsync(r => r.Id == id);
         if (recipe == null)
             return NotFound();
 
+        recipe.Categories.Clear();
+        foreach (var name in dto.Categories.Where(n => !string.IsNullOrWhiteSpace(n)))
+        {
+            var category = await _context.Categories.FirstOrDefaultAsync(c => c.Name == name) ?? new Category { Name = name };
+            recipe.Categories.Add(category);
+        }
         recipe.Name = dto.Name;
         recipe.Description = dto.Description;
-        recipe.Category = dto.Category;
         recipe.PreparationTime = dto.PreparationTime;
         recipe.ServesCount = dto.ServesCount;
         recipe.Ingredients = dto.Ingredients;
@@ -210,13 +249,13 @@ Return ONLY a valid JSON object — no explanation, no markdown — with exactly
 {{
   ""name"": ""translated recipe name"",
   ""description"": ""one or two sentence description of the dish"",
-  ""category"": ""meal category, e.g. Dinner, Breakfast, Dessert"",
+  ""categories"": ""meal categories, e.g. Dinner, Breakfast, Dessert"",
   ""ingredients"": ""one ingredient per line, e.g:\n200g flour\n2 eggs\n1 tsp salt"",
   ""instructions"": ""numbered steps, e.g:\n1. Preheat oven to 180C\n2. Mix flour and eggs"",
   ""detectedLanguage"": ""the language the recipe was written in, e.g. Japanese""
 }}
 
-If the image does not contain a recipe, return: {{""name"":"""",""description"":""Not a recipe image"",""category"":"""",""ingredients"":"""",""instructions"":"""",""detectedLanguage"":""""}}";
+If the image does not contain a recipe, return: {{""name"":"""",""description"":""Not a recipe image"",""categories"":"""",""ingredients"":"""",""instructions"":"""",""detectedLanguage"":""""}}";
     }
 
     [HttpDelete("{id}")]

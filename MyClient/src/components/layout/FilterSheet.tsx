@@ -64,9 +64,12 @@ const FilterSheet: React.FC<{
   onSortBy: (s: SortBy) => void;
   favoritesOnly: boolean;
   onFavoritesOnly: (v: boolean) => void;
+  categories: string[];
+  selectedCategory: string;
+  onSelectedCategory: (v: string) => void;
   maxPrepTime: number;
   onMaxPrepTime: (v: number) => void;
-}> = ({ open, onClose, total, filteredCount, sortBy, onSortBy, favoritesOnly, onFavoritesOnly, maxPrepTime, onMaxPrepTime }) => (
+}> = ({ open, onClose, total, filteredCount, sortBy, onSortBy, favoritesOnly, onFavoritesOnly, categories, selectedCategory, onSelectedCategory, maxPrepTime, onMaxPrepTime }) => (
   <>
     <div
       onClick={onClose}
@@ -114,6 +117,16 @@ const FilterSheet: React.FC<{
           <option value="Quickest">Quickest</option>
         </select>
       </Row>
+
+      {/* Category */}
+      {categories.length > 0 && (
+        <Row label="Category">
+          <select value={selectedCategory} onChange={(e) => onSelectedCategory(e.target.value)} style={selectStyle}>
+            <option value="">All</option>
+            {categories.map((c) => <option key={c} value={c}>{c}</option>)}
+          </select>
+        </Row>
+      )}
 
       {/* Favorites */}
       <Row label="Favorites">

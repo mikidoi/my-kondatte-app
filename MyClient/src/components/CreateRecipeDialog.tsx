@@ -30,7 +30,7 @@ interface CreateRecipeDialogProps {
   onSubmit: (recipe: {
     name: string;
     description: string;
-    category: string;
+    categories: string[];
     preparationTime: number;
     servesCount: number;
     ingredients: string;
@@ -82,7 +82,16 @@ function parseIngredients(_text: string): IngredientItem[] {
   }));
   return ingredients.length > 0
     ? ingredients
-    : [{ type: "ingredient" as const, id: Date.now(), qty: "", unit: "", name: "", note: "" }];
+    : [
+        {
+          type: "ingredient" as const,
+          id: Date.now(),
+          qty: "",
+          unit: "",
+          name: "",
+          note: "",
+        },
+      ];
 }
 
 // ── Main component ────────────────────────────────────────────────────────────
@@ -96,7 +105,9 @@ const CreateRecipeDialog = forwardRef<
 
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
-  const [category, setCategory] = useState("");
+  const [category, setCategory] = useState<string[]>([]);
+  const [newCategory, setNewCategory] = useState<string>("");
+  console.log("category", category);
   const [preparationTime, setPreparationTime] = useState(0);
   const [servesCount, setServesCount] = useState(1);
   const [ingredients, setIngredients] = useState<IngredientItem[]>([
@@ -122,7 +133,7 @@ const CreateRecipeDialog = forwardRef<
   const reset = () => {
     setName("");
     setDescription("");
-    setCategory("");
+    setCategory([]);
     setPreparationTime(0);
     setServesCount(1);
     setIngredients([
@@ -149,7 +160,12 @@ const CreateRecipeDialog = forwardRef<
       const result = await recipeApi.scanRecipe(file, scanLanguage);
       setName(result.name);
       setDescription(result.description);
-      setCategory(result.category);
+      setCategory(
+        result.category
+          .split(",")
+          .map((s) => s.trim())
+          .filter(Boolean)
+      );
       setIngredients(parseIngredients(result.ingredients));
       setInstructions(parseInstructions(result.instructions));
     } catch {
@@ -159,19 +175,33 @@ const CreateRecipeDialog = forwardRef<
     }
   };
 
-  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+  interface SubmitEvent extends React.FormEvent<HTMLFormElement> {}
+
+  interface RecipeData {
+    name: string;
+    description: string;
+    categories: string[];
+    preparationTime: number;
+    servesCount: number;
+    ingredients: string;
+    instructions: string;
+    image: File | null;
+  }
+
+  const handleSubmit = (e: SubmitEvent): void => {
     e.preventDefault();
     if (!name.trim()) return;
-    onSubmit({
+    const recipe: RecipeData = {
       name: name.trim(),
       description: description.trim(),
-      category: category.trim(),
+      categories: category,
       preparationTime,
       servesCount,
       ingredients: serializeIngredients(ingredients),
       instructions: serializeInstructions(instructions),
       image,
-    });
+    };
+    onSubmit(recipe);
     reset();
     close();
   };
@@ -354,7 +384,7 @@ const CreateRecipeDialog = forwardRef<
                 New recipe
               </h2>
               <button
-                type="submit"
+                type="button"
                 style={{
                   display: "flex",
                   alignItems: "center",
@@ -478,11 +508,29 @@ const CreateRecipeDialog = forwardRef<
                     />
                   </Field>
                   <Field label="Category">
-                    <TextInput
-                      value={category}
-                      onChange={setCategory}
-                      placeholder="e.g. Dinner"
-                    />
+                    <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
+                      {category.map((c) => (
+                        <span
+                          key={c}
+                          style={{
+                            padding: "3px 10px",
+                            borderRadius: 20,
+                            background: "var(--olive-pale)",
+                            fontSize: 13,
+                          }}
+                        >
+                          {c}{" "}
+                          <span
+                            onClick={() =>
+                              setCategory(category.filter((item) => item !== c))
+                            }
+                            style={{ cursor: "pointer" }}
+                          >
+                            x
+                          </span>
+                        </span>
+                      ))}
+                    </div>
                   </Field>
                   <div
                     style={{
@@ -607,7 +655,11 @@ const CreateRecipeDialog = forwardRef<
                   Cancel
                 </button>
                 <button
-                  type="submit"
+                  type="button"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    handleSubmit(e as unknown as SubmitEvent);
+                  }}
                   style={{
                     display: "flex",
                     alignItems: "center",
@@ -701,16 +753,61 @@ const CreateRecipeDialog = forwardRef<
                       <div
                         style={{
                           display: "grid",
-                          gridTemplateColumns: "1fr 1fr",
                           gap: 12,
                         }}
                       >
                         <Field label="Category">
-                          <TextInput
-                            value={category}
-                            onChange={setCategory}
-                            placeholder="e.g. Dinner"
-                          />
+                          <div style={{ display: "flex", gap: 12 }}>
+                            <div style={{ flex: 1 }}>
+                              <TextInput
+                                id="add-new-category"
+                                value={newCategory}
+                                onChange={setNewCategory}
+                                placeholder="Add a new Category"
+                                onEnter={() => {
+                                  setCategory((prev) =>
+                                    prev.includes(newCategory)
+                                      ? prev
+                                      : [...prev, newCategory]
+                                  );
+                                  setNewCategory("");
+                                }}
+                              />
+                            </div>
+                            <div
+                              style={{
+                                display: "flex",
+                                flex: 1,
+                                flexWrap: "wrap",
+                                gap: 6,
+                                alignItems: "flex-start",
+                              }}
+                            >
+                              {category.map((c) => (
+                                <span
+                                  key={c}
+                                  style={{
+                                    padding: "3px 10px",
+                                    borderRadius: 20,
+                                    background: "var(--olive-pale)",
+                                    fontSize: 13,
+                                  }}
+                                >
+                                  {c}{" "}
+                                  <span
+                                    onClick={() =>
+                                      setCategory(
+                                        category.filter((item) => item !== c)
+                                      )
+                                    }
+                                    style={{ cursor: "pointer" }}
+                                  >
+                                    x
+                                  </span>
+                                </span>
+                              ))}
+                            </div>
+                          </div>
                         </Field>
                         <Field label="Prep time (min)">
                           <input

@@ -37,6 +37,15 @@ export const RecipeListPage: React.FC = () => {
   const [likedIds, setLikedIds] = useState<Set<number>>(new Set());
   const [favoritesOnly, setFavoritesOnly] = useState(false);
   const [maxPrepTime, setMaxPrepTime] = useState(0);
+  const [categories, setCategories] = useState<string[]>([]);
+  const [selectedCategory, setSelectedCategory] = useState("");
+
+  useEffect(() => {
+    recipeApi
+      .getCategories()
+      .then(setCategories)
+      .catch(() => {});
+  }, []);
 
   useEffect(() => {
     fetch("/api/recipe")
@@ -67,7 +76,7 @@ export const RecipeListPage: React.FC = () => {
   const uploadRecipe = (newRecipe: {
     name: string;
     description: string;
-    category: string;
+    categories: string[];
     preparationTime: number;
     servesCount: number;
     ingredients: string;
@@ -77,12 +86,13 @@ export const RecipeListPage: React.FC = () => {
     const formData = new FormData();
     formData.append("name", newRecipe.name);
     formData.append("description", newRecipe.description);
-    formData.append("category", newRecipe.category);
+    newRecipe.categories.forEach((c) => formData.append("categories", c));
     formData.append("preparationTime", String(newRecipe.preparationTime));
     formData.append("servesCount", String(newRecipe.servesCount));
     formData.append("ingredients", newRecipe.ingredients);
     formData.append("instructions", newRecipe.instructions);
     if (newRecipe.image) formData.append("file", newRecipe.image);
+    console.log("formData", formData);
     recipeApi.uploadRecipe(formData).catch((e: Error) => setError(e.message));
   };
 
@@ -104,11 +114,26 @@ export const RecipeListPage: React.FC = () => {
         r.name.toLowerCase().includes(search.toLowerCase())
       );
     if (favoritesOnly) list = list.filter((r) => likedIds.has(r.id));
-    if (maxPrepTime > 0) list = list.filter((r) => r.preparationTime === 0 || r.preparationTime <= maxPrepTime);
-    if (sortBy === "Rating") list = list.sort((a, b) => a.name.localeCompare(b.name));
-    if (sortBy === "Quickest") list = list.sort((a, b) => a.preparationTime - b.preparationTime);
+    if (selectedCategory)
+      list = list.filter((r) => r.category === selectedCategory);
+    if (maxPrepTime > 0)
+      list = list.filter(
+        (r) => r.preparationTime === 0 || r.preparationTime <= maxPrepTime
+      );
+    if (sortBy === "Rating")
+      list = list.sort((a, b) => a.name.localeCompare(b.name));
+    if (sortBy === "Quickest")
+      list = list.sort((a, b) => a.preparationTime - b.preparationTime);
     return list;
-  }, [recipes, search, sortBy, favoritesOnly, maxPrepTime, likedIds]);
+  }, [
+    recipes,
+    search,
+    sortBy,
+    favoritesOnly,
+    selectedCategory,
+    maxPrepTime,
+    likedIds,
+  ]);
 
   const filterSheetProps = {
     open: filterOpen,
@@ -119,6 +144,9 @@ export const RecipeListPage: React.FC = () => {
     onSortBy: setSortBy,
     favoritesOnly,
     onFavoritesOnly: setFavoritesOnly,
+    categories,
+    selectedCategory,
+    onSelectedCategory: setSelectedCategory,
     maxPrepTime,
     onMaxPrepTime: setMaxPrepTime,
   };
@@ -343,17 +371,41 @@ export const RecipeListPage: React.FC = () => {
                 <button
                   onClick={() => setFilterOpen(true)}
                   style={{
-                    display: "flex", alignItems: "center", gap: 6,
-                    padding: "0 16px", borderRadius: 10, flexShrink: 0,
-                    border: `1.5px solid ${favoritesOnly || maxPrepTime > 0 ? "var(--olive)" : "var(--border)"}`,
-                    background: favoritesOnly || maxPrepTime > 0 ? "var(--olive-pale)" : "var(--white)",
-                    color: favoritesOnly || maxPrepTime > 0 ? "var(--olive)" : "var(--text-mid)",
-                    fontSize: 13, fontWeight: 600, cursor: "pointer",
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 6,
+                    padding: "0 16px",
+                    borderRadius: 10,
+                    flexShrink: 0,
+                    border: `1.5px solid ${
+                      favoritesOnly || maxPrepTime > 0 || selectedCategory
+                        ? "var(--olive)"
+                        : "var(--border)"
+                    }`,
+                    background:
+                      favoritesOnly || maxPrepTime > 0 || selectedCategory
+                        ? "var(--olive-pale)"
+                        : "var(--white)",
+                    color:
+                      favoritesOnly || maxPrepTime > 0 || selectedCategory
+                        ? "var(--olive)"
+                        : "var(--text-mid)",
+                    fontSize: 13,
+                    fontWeight: 600,
+                    cursor: "pointer",
                   }}
                 >
                   <IcoFilter /> Filter
-                  {(favoritesOnly || maxPrepTime > 0) && (
-                    <span style={{ width: 6, height: 6, borderRadius: "50%", background: "var(--olive)", flexShrink: 0 }} />
+                  {(favoritesOnly || maxPrepTime > 0 || selectedCategory) && (
+                    <span
+                      style={{
+                        width: 6,
+                        height: 6,
+                        borderRadius: "50%",
+                        background: "var(--olive)",
+                        flexShrink: 0,
+                      }}
+                    />
                   )}
                 </button>
               </div>

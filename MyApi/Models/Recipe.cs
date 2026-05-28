@@ -1,3 +1,5 @@
+using System.ComponentModel;
+
 namespace MyApi.Models;
 
 public class Recipe
@@ -7,7 +9,7 @@ public class Recipe
 
     public required string Description { get; set; }
 
-    public required string Category { get; set; }
+    public ICollection<Category> Categories { get; set; } = [];
 
     public int PreparationTime { get; set; } // in minutes
 
