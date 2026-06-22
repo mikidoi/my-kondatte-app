@@ -1,6 +1,17 @@
 # .NET (MyApi) junk
 bin/
 obj/
+
+# SQLite database files
+*.db
+*.db-shm
+*.db-wal
+
+# Uploaded images
+MyApi/wwwroot/images/
+
+# SQL backup files
+*.sql
 *.user
 *.suo
 
