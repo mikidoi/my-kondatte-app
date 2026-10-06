@@ -1,13 +1,25 @@
+using Microsoft.EntityFrameworkCore;
+using MyApi.Data;
+
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddControllers();
+builder.Services.AddDbContext<AppDbContext>(options => options.UseSqlite("Data Source=kondatte.db"));
+
+builder.Services.AddEndpointsApiExplorer();
+builder.Services.AddAutoMapper(typeof(Program));
+builder.Services.AddSwaggerGen();
 
 var app = builder.Build();
 
-// 2. These are the "Middlewares" (the order matters!)
+if (app.Environment.IsDevelopment())
+{
+    app.UseSwagger();
+    app.UseSwaggerUI();
+}
+
 app.UseAuthorization();
 
-// 3. IMPORTANT: This maps the incoming URLs to your Controller classes
 app.MapControllers();
 
 app.Run();
