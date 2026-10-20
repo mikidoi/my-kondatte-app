@@ -20,13 +20,16 @@ public class RecipeController : ControllerBase
     }
 
     [HttpGet]
-    public async Task<IActionResult> Get()
+    [ProducesResponseType<List<RecipeDto>>(StatusCodes.Status200OK)]
+    public async Task<IActionResult> GetRecipes()
     {
         var recipes = await _context.Recipes.ToListAsync();
         return Ok(recipes);
     }
 
     [HttpGet("{id}")]
+    [ProducesResponseType<RecipeDto>(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<ActionResult> Get(int id)
     {
         var recipe = await _context.Recipes.FindAsync(id);

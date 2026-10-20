@@ -175,7 +175,11 @@ export interface paths {
                     headers: {
                         [name: string]: unknown;
                     };
-                    content?: never;
+                    content: {
+                        "text/plain": components["schemas"]["RecipeDto"][];
+                        "application/json": components["schemas"]["RecipeDto"][];
+                        "text/json": components["schemas"]["RecipeDto"][];
+                    };
                 };
             };
         };
@@ -237,7 +241,22 @@ export interface paths {
                     headers: {
                         [name: string]: unknown;
                     };
-                    content?: never;
+                    content: {
+                        "text/plain": components["schemas"]["RecipeDto"];
+                        "application/json": components["schemas"]["RecipeDto"];
+                        "text/json": components["schemas"]["RecipeDto"];
+                    };
+                };
+                /** @description Not Found */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ProblemDetails"];
+                        "application/json": components["schemas"]["ProblemDetails"];
+                        "text/json": components["schemas"]["ProblemDetails"];
+                    };
                 };
             };
         };
@@ -470,25 +489,44 @@ export interface components {
             weeklyMealPlanId?: number;
             recipe?: components["schemas"]["RecipeSummaryDto"];
         };
+        ProblemDetails: {
+            type?: string | null;
+            title?: string | null;
+            /** Format: int32 */
+            status?: number | null;
+            detail?: string | null;
+            instance?: string | null;
+        } & {
+            [key: string]: unknown;
+        };
         Recipe: {
             /** Format: int32 */
             id?: number;
-            name: string | null;
-            description: string | null;
-            ingredients: string | null;
-            instructions: string | null;
+            name: string;
+            description: string;
+            ingredients: string;
+            instructions: string;
+            sourceUrl?: string | null;
+        };
+        RecipeDto: {
+            /** Format: uuid */
+            id: string;
+            name: string;
+            description: string;
+            ingredients: string;
+            instructions: string;
             sourceUrl?: string | null;
         };
         RecipeSummaryDto: {
             /** Format: int32 */
             id?: number;
-            name: string | null;
+            name: string;
         };
         RecipeUpdateDto: {
-            name: string | null;
-            description: string | null;
-            ingredients: string | null;
-            instructions: string | null;
+            name: string;
+            description: string;
+            ingredients: string;
+            instructions: string;
             sourceUrl?: string | null;
         };
         SavePlannedMealDto: {
@@ -509,7 +547,7 @@ export interface components {
             id?: number;
             /** Format: date */
             weekStartDate?: string;
-            plannedMeals?: components["schemas"]["PlannedMeal"][] | null;
+            plannedMeals?: components["schemas"]["PlannedMeal"][];
         };
         WeeklyMealPlanDto: {
             /** Format: int32 */

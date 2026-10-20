@@ -7,7 +7,8 @@
     "dev": "vite",
     "build": "tsc -b && vite build",
     "lint": "eslint .",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "gen:api": "npx openapi-typescript http://localhost:5109/swagger/v1/swagger.json -o src/shared/api/schema.d.ts"
   },
   "dependencies": {
     "@emotion/react": "^11.14.0",
