@@ -193,21 +193,21 @@ export interface paths {
             };
             requestBody?: {
                 content: {
-                    "application/json": components["schemas"]["Recipe"];
-                    "text/json": components["schemas"]["Recipe"];
-                    "application/*+json": components["schemas"]["Recipe"];
+                    "application/json": components["schemas"]["SaveRecipeDto"];
+                    "text/json": components["schemas"]["SaveRecipeDto"];
+                    "application/*+json": components["schemas"]["SaveRecipeDto"];
                 };
             };
             responses: {
-                /** @description OK */
-                200: {
+                /** @description Created */
+                201: {
                     headers: {
                         [name: string]: unknown;
                     };
                     content: {
-                        "text/plain": components["schemas"]["Recipe"];
-                        "application/json": components["schemas"]["Recipe"];
-                        "text/json": components["schemas"]["Recipe"];
+                        "text/plain": components["schemas"]["RecipeDto"];
+                        "application/json": components["schemas"]["RecipeDto"];
+                        "text/json": components["schemas"]["RecipeDto"];
                     };
                 };
             };
@@ -533,6 +533,13 @@ export interface components {
             dayOfWeek?: components["schemas"]["DayOfWeek"];
             /** Format: int32 */
             recipeId?: number;
+        };
+        SaveRecipeDto: {
+            name: string;
+            description: string;
+            ingredients: string;
+            instructions: string;
+            sourceUrl?: string | null;
         };
         SaveWeeklyMealPlanDto: {
             /** Format: date */

@@ -1,10 +1,21 @@
-import { Alert, Box, CircularProgress, Grid, Typography } from "@mui/material";
+import {
+  Alert,
+  Box,
+  Button,
+  CircularProgress,
+  Grid,
+  Typography,
+} from "@mui/material";
+import AddIcon from "@mui/icons-material/Add";
+import { useState } from "react";
 
-import { useRecipes } from "../shared/api/useRecipes";
+import { useGetRecipes } from "../shared/api/useRecipes";
 import RecipeCard from "./RecipeCard";
+import RecipeCreateDialog from "../shared/components/RecipeCreateDialog";
 
 export default function RecipePage() {
-  const { data, isLoading, isError, error } = useRecipes();
+  const { data, isLoading, isError, error } = useGetRecipes();
+  const [createOpen, setCreateOpen] = useState(false);
 
   if (isLoading) {
     return (
@@ -25,12 +36,29 @@ export default function RecipePage() {
   }
 
   return (
-    <Grid container spacing={2}>
-      {data.map((recipe) => (
-        <Grid key={recipe.id} size={{ xs: 12, sm: 6, md: 4 }}>
-          <RecipeCard recipe={recipe} />
-        </Grid>
-      ))}
-    </Grid>
+    <>
+      <Box
+        sx={{
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+          mb: 2,
+        }}
+      >
+        <h1 style={{ margin: 0 }}>Recipes</h1>
+        <Button variant="contained" startIcon={<AddIcon />} onClick={() => setCreateOpen(true)}>
+          New recipe
+        </Button>
+      </Box>
+      <Grid container spacing={2}>
+        {data.map((recipe) => (
+          <Grid key={recipe.id} size={{ xs: 12, sm: 6, md: 4 }}>
+            <RecipeCard recipe={recipe} />
+          </Grid>
+        ))}
+      </Grid>
+
+      <RecipeCreateDialog open={createOpen} onClose={() => setCreateOpen(false)} />
+    </>
   );
 }

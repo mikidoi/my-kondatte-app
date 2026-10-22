@@ -3,6 +3,7 @@ import { api } from "./client";
 import type { components } from "./schema";
 
 export type RecipeUpdateDto = components["schemas"]["RecipeUpdateDto"];
+export type SaveRecipeDto = components["schemas"]["SaveRecipeDto"];
 
 export const recipeKeys = {
   all: ["recipes"] as const,
@@ -35,6 +36,19 @@ export function useUpdateRecipe(id: number) {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: recipeKeys.detail(id) });
+    },
+  });
+}
+
+export function useCreateRecipe() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (body: SaveRecipeDto) => {
+      const { error } = await api.POST("/api/recipes", { body });
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: recipeKeys.all });
     },
   });
 }
