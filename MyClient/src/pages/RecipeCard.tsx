@@ -9,6 +9,7 @@ import {
 import { useState } from "react";
 import { Link as RouterLink } from "react-router";
 import { useRecipe } from "../shared/api/useRecipes";
+import RecipeDeleteDialog from "../shared/components/RecipeDeleteDialog";
 import RecipeEditDialog from "../shared/components/RecipeEditDialog";
 
 interface Recipe {
@@ -24,6 +25,7 @@ interface RecipeCardProps {
 
 export default function RecipeCard({ recipe }: RecipeCardProps) {
   const [editOpen, setEditOpen] = useState(false);
+  const [deleteOpen, setDeleteOpen] = useState(false);
   const numericId = Number(recipe.id);
   const { data: fullRecipe } = useRecipe(numericId, { enabled: editOpen });
 
@@ -58,6 +60,9 @@ export default function RecipeCard({ recipe }: RecipeCardProps) {
           >
             Show Recipe
           </Button>
+          <Button size="small" onClick={() => setDeleteOpen(true)}>
+            Delete
+          </Button>
         </CardActions>
       </Card>
 
@@ -75,6 +80,13 @@ export default function RecipeCard({ recipe }: RecipeCardProps) {
           onClose={() => setEditOpen(false)}
         />
       )}
+
+      <RecipeDeleteDialog
+        id={numericId}
+        name={recipe.name}
+        open={deleteOpen}
+        onClose={() => setDeleteOpen(false)}
+      />
     </>
   );
 }

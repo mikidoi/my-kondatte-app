@@ -53,6 +53,21 @@ export function useCreateRecipe() {
   });
 }
 
+export function useDeleteRecipe() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (id: number) => {
+      const { error } = await api.DELETE("/api/recipes/{id}", {
+        params: { path: { id } },
+      });
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: recipeKeys.all });
+    },
+  });
+}
+
 export function useGetRecipes() {
   return useQuery({
     queryKey: recipeKeys.all,
