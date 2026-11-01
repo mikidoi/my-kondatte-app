@@ -39,11 +39,13 @@ public class RecipeController : ControllerBase
     }
 
     [HttpPost]
-    public async Task<ActionResult<Recipe>> Post(Recipe recipe)
+    [ProducesResponseType<RecipeDto>(StatusCodes.Status201Created)]
+    public async Task<ActionResult> Post(SaveRecipeDto dto)
     {
+        var recipe = _mapper.Map<Recipe>(dto);
         _context.Recipes.Add(recipe);
         await _context.SaveChangesAsync();
-        return CreatedAtAction(nameof(Get), new { id = recipe.Id }, recipe);
+        return CreatedAtAction(nameof(Get), new { id = recipe.Id }, _mapper.Map<RecipeDto>(recipe));
     }
 
     [HttpPut("{id}")]
