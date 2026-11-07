@@ -32,6 +32,7 @@ export default function DayColumn({
         display: "flex",
         flexDirection: "column",
         minHeight: 280,
+        minWidth: 0,
       }}
     >
       <Box sx={{ bgcolor: "primary.main", color: "primary.contrastText", px: 1.5, py: 1 }}>
