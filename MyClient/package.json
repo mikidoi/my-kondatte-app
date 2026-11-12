@@ -28,7 +28,6 @@
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
-    "@rolldown/binding-darwin-arm64": "^1.2.12",
     "@tanstack/react-query-devtools": "^5.104.1",
     "@types/node": "^24.13.3",
     "@types/react": "^19.2.18",

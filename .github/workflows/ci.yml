@@ -1,0 +1,94 @@
+name: CI
+
+# Triggers: every PR into main, and every push to main.
+# paths-ignore keeps doc-only changes from burning CI minutes.
+on:
+  pull_request:
+    branches: [main]
+    paths-ignore: ["**.md"]
+  push:
+    branches: [main]
+    paths-ignore: ["**.md"]
+  workflow_dispatch:
+
+# Cancel an older run of the same branch when a new commit arrives.
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+env:
+  API_DIR: MyApi          
+  WEB_DIR: MyClient         
+
+jobs:
+  api:
+    name: API (restore, build, test)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 10.0
+
+      - name: Restore
+        run: dotnet restore
+        working-directory: ${{ env.API_DIR }}
+
+      - name: Build
+        run: dotnet build --no-restore --configuration Release
+        working-directory: ${{ env.API_DIR }}
+
+      - name: Test
+        run: >
+          dotnet test --no-build --configuration Release
+          --logger "trx;LogFileName=test-results.trx"
+          --results-directory ./TestResults
+        working-directory: ${{ env.API_DIR }}
+
+      - name: Upload test results
+        if: always()   # upload even when tests fail, so you can inspect them
+        uses: actions/upload-artifact@v4
+        with:
+          name: api-test-results
+          path: ${{ env.API_DIR }}/TestResults/*.trx
+
+  web:
+    name: Web (lint, build) on Node ${{ matrix.node }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        node: [22, 24]   # a matrix build: the job runs once per version
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node }}
+          cache: npm 
+          cache-dependency-path: ${{ env.WEB_DIR }}/package-lock.json
+
+      - name: Install
+        run: npm ci
+        working-directory: ${{ env.WEB_DIR }}
+
+      - name: Lint
+        run: npm run lint
+        working-directory: ${{ env.WEB_DIR }}
+
+      - name: Build
+        run: npm run build
+        working-directory: ${{ env.WEB_DIR }}
+
+      # Keep the built site once (not per matrix entry); step 5 (CD) will reuse it.
+      - name: Upload build artifact
+        if: matrix.node == 22
+        uses: actions/upload-artifact@v4
+        with:
+          name: web-dist
+          path: ${{ env.WEB_DIR }}/dist
+          retention-days: 7
